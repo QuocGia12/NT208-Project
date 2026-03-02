@@ -20,6 +20,9 @@ let isMoving = false;
 let mapGraph = {};
 let reachableHighlights = [];
 
+let playerFood = 0;
+let foodText;
+
 // Danh sách tọa độ Node bạn đã cung cấp
 const rawNodes = {
     0: { x: 86, y: 52 }, 1: { x: 175, y: 50 }, 2: { x: 261, y: 52 }, 3: { x: 336, y: 50 },
@@ -86,21 +89,72 @@ function preload() {
 }
 
 function create() {
-    // 1. Vẽ Map và Khởi tạo Graph
+    // 1. Vẽ Map
     this.add.image(400, 400, 'map');
     
+    // 2. KHỞI TẠO GRAPH (CHỈ DÙNG 1 VÒNG LẶP NÀY)
     Object.keys(rawNodes).forEach(id => {
+        const isObstacle = obstacleIds.includes(parseInt(id));
         mapGraph[id] = {
             ...rawNodes[id],
-            isObstacle: obstacleIds.includes(parseInt(id)),
-            neighbors: []
+            isObstacle: isObstacle,
+            neighbors: [],
+            // Khởi tạo lương thực cho Shop
+            foodValue: isObstacle ? Phaser.Math.Between(10, 50) : 0 
         };
     });
 
+    // 3. NẠP KẾT NỐI (SAU KHI ĐÃ KHỞI TẠO XONG NODE)
     edgeConnections.forEach(([u, v]) => {
-        mapGraph[u].neighbors.push(v);
-        mapGraph[v].neighbors.push(u);
+        if (mapGraph[u] && mapGraph[v]) {
+            mapGraph[u].neighbors.push(v);
+            mapGraph[v].neighbors.push(u);
+        }
     });
+
+    // 4. UI Lương thực
+    foodText = this.add.text(20, 20, 'Lương thực: 0', { 
+        fontSize: '20px', 
+        fill: '#f1c40f',
+        backgroundColor: '#000000',
+        padding: 5
+    }).setDepth(3);
+
+    // ... (Giữ nguyên phần vẽ Debug, Player và RollBtn)
+}
+
+function create() {
+    // 1. Vẽ Map và Khởi tạo Graph
+    this.add.image(400, 400, 'map');
+    
+    // 2. KHỞI TẠO GRAPH (CHỈ DÙNG 1 VÒNG LẶP NÀY)
+    Object.keys(rawNodes).forEach(id => {
+        const isObstacle = obstacleIds.includes(parseInt(id));
+        mapGraph[id] = {
+            ...rawNodes[id],
+            isObstacle: isObstacle,
+            neighbors: [],
+            // Khởi tạo lương thực cho Shop
+            foodValue: isObstacle ? Phaser.Math.Between(10, 50) : 0 
+        };
+    });
+
+    // 3. NẠP KẾT NỐI (SAU KHI ĐÃ KHỞI TẠO XONG NODE)
+    edgeConnections.forEach(([u, v]) => {
+        if (mapGraph[u] && mapGraph[v]) {
+            mapGraph[u].neighbors.push(v);
+            mapGraph[v].neighbors.push(u);
+        }
+    });
+
+    // 4. UI Lương thực
+    foodText = this.add.text(20, 20, 'Lương thực: 0', { 
+        fontSize: '20px', 
+        fill: '#f1c40f',
+        backgroundColor: '#000000',
+        padding: 5
+    }).setDepth(3);
+
 
     // Vẽ Debug (Có thể comment lại khi game hoàn thiện)
     let graphics = this.add.graphics();
@@ -111,6 +165,7 @@ function create() {
         let color = node.isObstacle ? 0xff0000 : 0xffffff;
         this.add.circle(node.x, node.y, 5, color, 0.5);
     }
+
 
     // 2. Nhân vật
     player = this.add.sprite(mapGraph[playerPos].x, mapGraph[playerPos].y, 'player').setDepth(2);
@@ -171,20 +226,50 @@ function showValidMoves(scene, steps) {
 }
 
 // --- LOGIC DI CHUYỂN TỪNG BƯỚC THEO ĐƯỜNG DẪN ---
+// function movePlayerPath(scene, targetId, visitedMap) {
+//     isMoving = true;
+//     clearHighlights();
+
+//     // Lần ngược đường đi từ Đích về Đầu
+//     let path = [];
+//     let curr = targetId;
+//     while (curr !== null) {
+//         path.push(curr);
+//         curr = visitedMap.get(curr).parent;
+//     }
+//     path.reverse(); // Đổi lại thứ tự Đầu -> Đích
+
+//     // Tạo chuỗi Tweens để nhân vật chạy mượt mà qua từng Node
+//     let tweensArray = path.map(nodeId => ({
+//         targets: player,
+//         x: mapGraph[nodeId].x,
+//         y: mapGraph[nodeId].y,
+//         duration: 300,
+//         ease: 'Linear'
+//     }));
+
+//     scene.tweens.chain({
+//         tweens: tweensArray,
+//         onComplete: () => {
+//             isMoving = false;
+//             playerPos = targetId;
+//             console.log("Đã tới ô: " + playerPos);
+//         }
+//     });
+// }
+
 function movePlayerPath(scene, targetId, visitedMap) {
     isMoving = true;
     clearHighlights();
 
-    // Lần ngược đường đi từ Đích về Đầu
     let path = [];
     let curr = targetId;
     while (curr !== null) {
         path.push(curr);
         curr = visitedMap.get(curr).parent;
     }
-    path.reverse(); // Đổi lại thứ tự Đầu -> Đích
+    path.reverse();
 
-    // Tạo chuỗi Tweens để nhân vật chạy mượt mà qua từng Node
     let tweensArray = path.map(nodeId => ({
         targets: player,
         x: mapGraph[nodeId].x,
@@ -198,9 +283,48 @@ function movePlayerPath(scene, targetId, visitedMap) {
         onComplete: () => {
             isMoving = false;
             playerPos = targetId;
-            console.log("Đã tới ô: " + playerPos);
+            
+            // KIỂM TRA SHOP XUNG QUANH
+            checkNearbyShops(scene, playerPos);
         }
     });
+}
+
+function checkNearbyShops(scene, currentIdx) {
+    let neighbors = mapGraph[currentIdx].neighbors;
+    let foundShop = false;
+
+    neighbors.forEach(nId => {
+        let neighborNode = mapGraph[nId];
+        
+        // Nếu hàng xóm là Shop và vẫn còn lương thực
+        if (neighborNode.isObstacle && neighborNode.foodValue > 0) {
+            foundShop = true;
+            let gain = neighborNode.foodValue;
+            playerFood += gain;
+            neighborNode.foodValue = 0; // Nhận xong thì shop hết hàng (tùy bạn muốn)
+
+            // Cập nhật UI
+            foodText.setText('Lương thực: ' + playerFood);
+
+            // Hiệu ứng Text bay lên thông báo
+            let msg = scene.add.text(neighborNode.x, neighborNode.y - 20, '+' + gain + ' 🌾', {
+                fontSize: '20px', fill: '#00ff00', fontWeight: 'bold'
+            }).setDepth(4);
+
+            scene.tweens.add({
+                targets: msg,
+                y: msg.y - 50,
+                alpha: 0,
+                duration: 1500,
+                onComplete: () => msg.destroy()
+            });
+        }
+    });
+
+    if (foundShop) {
+        console.log("Bạn đã nhận được lương thực từ shop cạnh bên!");
+    }
 }
 
 function clearHighlights() {
