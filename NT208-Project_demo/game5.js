@@ -135,7 +135,7 @@ function create() {
             isObstacle: isObstacle,
             neighbors: [],
             // Khởi tạo lương thực cho Shop
-            foodValue: isObstacle ? Phaser.Math.Between(10, 50) : 0 
+            foodValue: isObstacle ? 1 : 0 
         };
     });
 
