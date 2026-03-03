@@ -113,7 +113,7 @@ function create() {
         }
     ];
 
-    this.turnText = this.add.text(400, 30, "Lượt: P1", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5).setDepth(10);
+    this.turnText = this.add.text(400, 30, "Lượt: P1", { fontSize: '26px', fill: '#000' }).setOrigin(0.5).setDepth(10);
     this.diceText = this.add.text(700, 110, 'Dice: -', { fontSize: '20px' }).setDepth(10);
 
     const rollBtn = this.add.text(680, 50, '🎲 ROLL', { fontSize: '24px', backgroundColor: '#e74c3c', padding: 10 }).setInteractive({ useHandCursor: true }).setDepth(10);
