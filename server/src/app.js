@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import { connectRedis } from './config/redis.js';
 import authRoutes from './api/routes/auth.js';
+import { registerRoomHandlers } from './socket/roomHandlers.js';
 
 dotenv.config();
 
