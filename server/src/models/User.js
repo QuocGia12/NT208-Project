@@ -66,11 +66,9 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password trước khi lưu
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password_hash")) 
-    return next();
+userSchema.pre('save', async function () {
+  if (!this.isModified('password_hash')) return;
   this.password_hash = await bcrypt.hash(this.password_hash, 10);
-  next();
 });
 
 // Method kiểm tra password
