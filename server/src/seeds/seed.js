@@ -8,13 +8,14 @@ import { CHARACTERS_DATA } from './characters.seed.js';
 dotenv.config();
 
 async function seed() {
-  try {
+  try 
+  {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
 
     // Xóa data cũ
     await Card.deleteMany({});
-  await Character.deleteMany({});
+    await Character.deleteMany({});
     console.log('Cleared old data');
 
     // Nạp data mới
@@ -26,7 +27,9 @@ async function seed() {
 
     console.log('Seed completed successfully');
     process.exit(0);
-  } catch (err) {
+  } 
+  catch (err) 
+  {
     console.error('Seed failed:', err);
     process.exit(1);
   }
