@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import { connectRedis } from './config/redis.js';
+import authRoutes from './api/routes/auth.js';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ const io = new Server(httpServer, {
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', authRoutes); // Đăng ký route auth 
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'Server is running' });
