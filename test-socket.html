@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head><title>Socket Test</title></head>
+<body>
+  <button onclick="createRoom()">Tạo phòng</button>
+  <button onclick="joinRoom()">Vào phòng</button>
+  <input id="roomCode" placeholder="Room code" />
+  <pre id="log"></pre>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const socket = io('http://localhost:3001');
+    const log = document.getElementById('log');
+
+    socket.on('room:updated', (data) => {
+      log.textContent += JSON.stringify(data, null, 2) + '\n\n';
+    });
+
+    function createRoom() {
+      socket.emit('room:create', {
+        userId: 'user_' + Date.now(),
+        username: 'Player ' + Math.floor(Math.random()*100),
+        characterId: 'char_ty'
+      });
+    }
+
+    function joinRoom() {
+      const code = document.getElementById('roomCode').value;
+      socket.emit('room:join', {
+        roomCode: code,
+        userId: 'user_' + Date.now(),
+        username: 'Player ' + Math.floor(Math.random()*100),
+        characterId: 'char_suu'
+      });
+    }
+  </script>
+</body>
+</html>

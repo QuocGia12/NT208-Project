@@ -1,0 +1,3 @@
+### Lấy thông tin cá nhân (Get Current User)
+GET http://localhost:3001/api/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWNjZGJhNGZjNDI5NjM2ZjQyZjZkOTQiLCJpYXQiOjE3NzUwMzMzMzEsImV4cCI6MTc3NTYzODEzMX0.qnIjLAgV61HO1omPn33pjKIxCATxwvPDU_fqRtoP63k
