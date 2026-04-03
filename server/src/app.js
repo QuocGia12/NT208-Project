@@ -9,6 +9,8 @@ import { connectDB } from './config/db.js';
 import { connectRedis } from './config/redis.js';
 import authRoutes from './api/routes/auth.js';
 import { registerRoomHandlers } from './socket/roomHandlers.js';
+import { registerGameHandlers } from './socket/gameHandlers.js';
+
 
 dotenv.config();
 
@@ -39,6 +41,7 @@ io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
     
     registerRoomHandlers(io, socket);
+    registerGameHandlers(io, socket);
 
 
     socket.on('disconnect', () => {
