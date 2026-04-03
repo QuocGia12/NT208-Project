@@ -22,6 +22,7 @@ export class GameEngine {
     }
 
     async initMatch(playerInfos) {
+        console.log('initMatch called with:', JSON.stringify(playerInfos));
         // Load tất cả cards từ MongoDB một lần
         const allCards = await Card.find({}).lean();
         const deck = this._buildDeck(allCards);
@@ -42,7 +43,9 @@ export class GameEngine {
         });
 
         // Player đầu tiên đến lượt
-        players[0].isMyTurn = true;
+        if (players.length > 0) {
+            players[0].isMyTurn = true;  // ← chỉ set sau khi players đã có phần tử
+        }
 
         this.state = new GameState(this.roomCode, players, board);
         this.turnManager = new TurnManager(this.state, deck);

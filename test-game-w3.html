@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Game Test</title>
+  <style>
+    body { background: #0f0f1a; color: #fff; font-family: sans-serif; padding: 20px; }
+    button { background: #534AB7; color: #fff; border: none; border-radius: 8px;
+             padding: 10px 20px; margin: 5px; cursor: pointer; font-size: 14px; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #log { background: #1e1e3a; border-radius: 8px; padding: 16px;
+           height: 300px; overflow-y: auto; font-size: 13px; margin-top: 16px; }
+    .log-entry { margin-bottom: 6px; border-bottom: 1px solid #2a2a4a; padding-bottom: 6px; }
+    .highlight { color: #FFD700; }
+    .error { color: #F0997B; }
+    .success { color: #5DCAA5; }
+  </style>
+</head>
+<body>
+  <h3>🎮 Test Game — Tab này là: <span id="tabName">?</span></h3>
+
+  <div>
+    <input id="nameInput" placeholder="Tên người chơi" value="Player1"
+           style="padding:8px;border-radius:6px;border:1px solid #3a3a5a;
+                  background:#1e1e3a;color:#fff;margin-right:8px"/>
+    <button onclick="connect()">Kết nối</button>
+  </div>
+
+  <div style="margin-top:12px">
+    <button onclick="createRoom()" id="btnCreate" disabled>Tạo phòng</button>
+    <input id="roomInput" placeholder="Room code" maxlength="6"
+           style="padding:8px;border-radius:6px;border:1px solid #3a3a5a;
+                  background:#1e1e3a;color:#fff;text-transform:uppercase;
+                  letter-spacing:2px;width:100px;margin:0 8px"/>
+    <button onclick="joinRoom()" id="btnJoin" disabled>Vào phòng</button>
+  </div>
+
+  <div style="margin-top:12px">
+    <button onclick="startGame()" id="btnStart" disabled>Bắt đầu game</button>
+    <button onclick="rollDice()" id="btnRoll" disabled>🎲 Đổ xúc xắc</button>
+    <button onclick="endTurn()" id="btnEnd" disabled>✅ Kết thúc lượt</button>
+  </div>
+
+  <div style="margin-top:12px">
+    <strong>Room: </strong><span id="roomCode" class="highlight">-</span>
+    &nbsp;|&nbsp;
+    <strong>Lượt: </strong><span id="turnInfo">-</span>
+    &nbsp;|&nbsp;
+    <strong>Xúc xắc: </strong><span id="diceResult">-</span>
+  </div>
+
+  <div id="players" style="margin-top:12px"></div>
+  <div id="log"></div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    let socket;
+    let myUserId = 'user_' + Math.random().toString(36).substring(2, 8);
+    let myUsername = '';
+    let currentRoomCode = '';
+    let isMyTurn = false;
+
+    document.getElementById('tabName').textContent =
+      'Tab ' + (Math.random() > 0.5 ? 'A' : 'B') + ' (' + myUserId + ')';
+
+    function log(msg, type = '') {
+      const div = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry ' + type;
+      entry.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+      div.insertBefore(entry, div.firstChild);
+    }
+
+    function connect() {
+      myUsername = document.getElementById('nameInput').value || 'Player';
+      socket = io('http://localhost:3001');
+
+      socket.on('connect', () => {
+        log('✅ Kết nối thành công! Socket ID: ' + socket.id, 'success');
+        document.getElementById('btnCreate').disabled = false;
+        document.getElementById('btnJoin').disabled = false;
+      });
+
+      socket.on('disconnect', () => log('❌ Mất kết nối', 'error'));
+
+      // Room events
+      socket.on('room:updated', ({ success, room, error }) => {
+        if (!success) { log('❌ ' + error, 'error'); return; }
+        currentRoomCode = room.roomCode;
+        document.getElementById('roomCode').textContent = room.roomCode;
+        document.getElementById('btnStart').disabled = room.players.length < 2;
+        renderPlayers(room.players);
+        log('Phòng cập nhật: ' + room.players.length + ' người', 'success');
+      });
+
+      // Game events
+      socket.on('game:started', ({ state }) => {
+        log('🎮 Game bắt đầu!', 'success');
+        updateState(state);
+      });
+
+      socket.on('game:turnStarted', ({ currentPlayer, drawnCard, state }) => {
+        isMyTurn = currentPlayer === myUserId;
+        document.getElementById('turnInfo').textContent =
+          isMyTurn ? '👉 Lượt của BẠN' : 'Lượt của ' + currentPlayer;
+        document.getElementById('btnRoll').disabled = !isMyTurn;
+        document.getElementById('btnEnd').disabled = true;
+        if (drawnCard) log('Rút bài: ' + drawnCard.name);
+        if (isMyTurn) log('👉 Đến lượt bạn! Hãy đổ xúc xắc', 'highlight');
+        updateState(state);
+      });
+
+      socket.on('game:diceRolled', ({ userId, result, paths, state }) => {
+        document.getElementById('diceResult').textContent = result;
+        document.getElementById('btnEnd').disabled = !isMyTurn;
+        log((userId === myUserId ? 'Bạn' : userId) + ' đổ được: ' + result +
+            ' — ' + paths.length + ' đường đi khả thi');
+        updateState(state);
+      });
+
+      socket.on('game:playerMoved', ({ userId, path, state }) => {
+        log((userId === myUserId ? 'Bạn' : userId) +
+            ' di chuyển qua ' + path.length + ' ô → đến ô ' + path[path.length-1]);
+        updateState(state);
+      });
+
+      socket.on('game:combatResolved', ({ results }) => {
+        results.flat().forEach(r => {
+          if (r.type === 'pickup') log('🛒 Nhặt lương thực tại ô ' + r.cellId, 'success');
+          if (r.type === 'steal' && r.success) log('⚔️ Cướp lương thực thành công!', 'highlight');
+          if (r.type === 'push') log('💥 Húc văng người chơi!');
+          if (r.type === 'domino') log('🎯 Hiệu ứng Domino!');
+        });
+      });
+
+      socket.on('stack:windowOpen', ({ message, windowMs }) => {
+        log('⚡ STACK: ' + message, 'highlight');
+      });
+
+      socket.on('stack:resolved', ({ message }) => {
+        log('✅ Stack giải quyết: ' + message, 'success');
+      });
+
+      socket.on('game:monsterEvent', ({ targetShopId, message }) => {
+        log('👹 ' + message, 'error');
+      });
+
+      socket.on('game:turnSkipped', ({ userId, reason }) => {
+        log('⏭️ ' + userId + ' bị bỏ lượt: ' + (reason || 'skip_turn'));
+      });
+
+      socket.on('game:over', ({ rankings, endReason }) => {
+        log('🏆 KẾT THÚC! Lý do: ' + endReason, 'highlight');
+        rankings.forEach(r => {
+          log('#' + r.rank + ' ' + r.username + ' — ' + r.finalFood + ' bao', 'success');
+        });
+      });
+
+      socket.on('error', ({ message }) => log('❌ Lỗi: ' + message, 'error'));
+    }
+
+    function createRoom() {
+      socket.emit('room:create', {
+        userId: myUserId,
+        username: myUsername,
+        characterId: 'char_ty'
+      });
+      log('Đang tạo phòng...');
+    }
+
+    function joinRoom() {
+      const code = document.getElementById('roomInput').value.toUpperCase();
+      if (!code) { log('Nhập room code!', 'error'); return; }
+      socket.emit('room:join', {
+        roomCode: code,
+        userId: myUserId,
+        username: myUsername,
+        characterId: 'char_suu'
+      });
+      log('Đang vào phòng ' + code + '...');
+    }
+
+    function startGame() {
+      socket.emit('game:start', {
+        roomCode: currentRoomCode,
+        players: [] // server lấy từ Redis
+      });
+      log('Bắt đầu game...');
+    }
+
+    function rollDice() {
+      socket.emit('game:rollDice', { roomCode: currentRoomCode, userId: myUserId });
+      document.getElementById('btnRoll').disabled = true;
+    }
+
+    function endTurn() {
+      socket.emit('game:turnEnd', { roomCode: currentRoomCode, userId: myUserId });
+      document.getElementById('btnEnd').disabled = true;
+      isMyTurn = false;
+    }
+
+    function renderPlayers(players) {
+      document.getElementById('players').innerHTML =
+        '<strong>Người chơi:</strong> ' +
+        players.map(p =>
+          '<span style="margin-right:12px;color:' +
+          (p.userId === myUserId ? '#FFD700' : '#aaa') + '">' +
+          (p.isHost ? '👑 ' : '') + p.username +
+          (p.userId === myUserId ? ' (bạn)' : '') +
+          '</span>'
+        ).join('');
+    }
+
+    function updateState(state) {
+      if (!state) return;
+      const me = state.players.find(p => p.userId === myUserId);
+      if (!me) return;
+      renderPlayers(state.players.map(p => ({
+        ...p,
+        label: p.username + ': ' + p.foodCount + ' bao'
+      })));
+      document.getElementById('players').innerHTML =
+        state.players.map(p =>
+          '<span style="margin-right:16px;color:' +
+          (p.isMyTurn ? '#FFD700' : '#aaa') + '">' +
+          (p.isMyTurn ? '▶ ' : '') + p.username +
+          ': <strong>' + p.foodCount + '</strong> bao' +
+          (p.userId === myUserId ? ' 👤' : '') +
+          '</span>'
+        ).join(' | ');
+    }
+  </script>
+</body>
+</html>
