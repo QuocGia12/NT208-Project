@@ -4,6 +4,13 @@ import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
 
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import AuthPage from './pages/AuthPage';
+import LobbyPage from './pages/LobbyPage';
+import GamePage from './pages/GamePage';
+import ResultPage from './pages/ResultPage';
+
+
 function App() {
   const [count, setCount] = useState(0)
 
@@ -118,4 +125,32 @@ function App() {
   )
 }
 
-export default App
+function PrivateRoute({ children }) {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/" replace />;
+}
+
+
+function RootApp() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/result" element={
+          <PrivateRoute><ResultPage /></PrivateRoute>
+        } />
+
+        <Route path="/" element={<AuthPage />} />
+        <Route path="/lobby" element={
+          <PrivateRoute><LobbyPage /></PrivateRoute>
+        } />
+        <Route path="/game" element={
+          <PrivateRoute><GamePage /></PrivateRoute>
+        } />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default RootApp;
+
+

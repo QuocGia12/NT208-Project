@@ -5,6 +5,7 @@ export const SOCKET_EVENTS = {
     ROOM_UPDATED: 'room:updated',
     // Game
     GAME_START: 'game:start',
+    GAME_STARTED: 'game:started',
     ROLL_DICE: 'game:rollDice',
     MOVE_PLAYER: 'game:movePlayer',
     PLAY_CARD: 'game:playCard',
