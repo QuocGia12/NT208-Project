@@ -59,4 +59,12 @@ async function start() {
     });
 }
 
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception — server vẫn chạy:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection — server vẫn chạy:', reason);
+});
+
 start();

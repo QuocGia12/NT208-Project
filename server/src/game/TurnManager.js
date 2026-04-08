@@ -7,29 +7,33 @@ export class TurnManager {
     startTurn() {
         const player = this.gs.getCurrentPlayer();
 
-        // Xử lý skip turn (bị Khóa tài khoản)
         if (player.isSkipTurn) {
-        player.isSkipTurn = false;
-        this.gs.advanceTurn();
-        return { skipped: true, playerId: player.userId };
+            player.isSkipTurn = false;
+            this.gs.advanceTurn();
+            return { skipped: true, playerId: player.userId };
         }
 
-        // Xử lý ngủ (bị Ru ngủ)
         if (player.isSleeping) {
-        player.isSleeping = false;
-        this.gs.advanceTurn();
-        return { skipped: true, playerId: player.userId, reason: 'sleeping' };
+            player.isSleeping = false;
+            this.gs.advanceTurn();
+            return { skipped: true, playerId: player.userId, reason: 'sleeping' };
         }
 
         player.isMyTurn = true;
         player.skillUsedThisTurn = false;
-        this.gs.phase = 'draw';
+        this.gs.phase = 'draw';        // ← đảm bảo reset về 'draw'
+        this.gs.lastDiceRoll = null;   // ← reset xúc xắc
 
-        // Tự động rút bài
         const drawnCard = this.autoDrawCard(player);
-
-        return { skipped: false, drawnCard, player };
-    }
+        const excess = player.handCards.length - 6;
+        return { 
+            skipped: false, 
+            drawnCard, 
+            player,
+            excess: excess > 0 ? excess : 0,
+            mustDiscard: excess > 0
+         };
+        }
 
     autoDrawCard(player) {
         if (this.deck.length === 0) return null;
@@ -55,8 +59,9 @@ export class TurnManager {
         const player = this.gs.getCurrentPlayer();
         player.isMyTurn = false;
 
-        const wasRoundComplete = this.gs.isRoundComplete();
+        // Advance turn trước, rồi check xem có complete vòng không
         this.gs.advanceTurn();
+        const wasRoundComplete = this.gs.isRoundComplete();
 
         if (wasRoundComplete) {
         this.gs.currentRound++;

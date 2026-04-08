@@ -24,27 +24,34 @@ export class WorldEventSystem {
         const targetShopId = this.monsterDeck.pop();
         const shop = this.gs.board[targetShopId];
 
-        if (!shop || shop.isDestroyed) return this.onRoundEnd(); // bỏ qua shop đã hỏng
+        // Bỏ qua shop đã bị phá hủy rồi
+        if (!shop || shop.isDestroyed) {
+            return this.onRoundEnd();
+        }
 
         const penalized = [];
 
-        // Trừ đồ người đứng tại shop
+        // Quái thú tấn công shop
+        // Tất cả player đứng trên shop đó mất 1 lương thực (nếu có)
         for (const userId of shop.occupants) {
-        const player = this.gs.players.find(p => p.userId === userId);
-        if (player && player.foodCount > 0) {
-            player.foodCount -= 1;
-            penalized.push({ userId, newFood: player.foodCount });
-        }
+            const player = this.gs.players.find(p => p.userId === userId);
+            if (player && player.foodCount > 0) {
+                player.foodCount -= 1;
+                penalized.push({
+                    userId,
+                    newFood: player.foodCount
+                });
+            }
         }
 
-        // Phá hủy shop
+        // Phá hủy shop — loại bỏ tất cả lương thực và đánh dấu
         shop.food = 0;
         shop.isDestroyed = true;
 
         return {
-        targetShopId,
-        penalized,
-        remainingShops: this.monsterDeck.length
+            targetShopId,
+            penalized,              // Danh sách player bị mất food
+            remainingShops: this.monsterDeck.length  // Số shop còn lại chưa bị tấn công
         };
     }
 }

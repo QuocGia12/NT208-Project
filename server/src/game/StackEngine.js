@@ -11,45 +11,54 @@ export class StackEngine {
 
     // Mở cửa sổ stack khi có thẻ/kỹ năng được kích hoạt
     open(card, actor, target, onResolve) {
-        // Xóa timer cũ nếu có
-        if (this.timer) clearTimeout(this.timer);
+        try {
+            // Xóa timer cũ nếu có
+            if (this.timer) clearTimeout(this.timer);
 
-        // Push thẻ đầu tiên vào stack
-        this.stack.push({ card, actor, target, timestamp: Date.now() });
-        this.isOpen = true;
-        this.onResolve = onResolve;
+            // Push thẻ đầu tiên vào stack
+            this.stack.push({ card, actor, target, timestamp: Date.now() });
+            this.isOpen = true;
+            this.onResolve = onResolve;
 
-        // Broadcast cho tất cả: có 3 giây để can thiệp
-        this.io.to(this.roomCode).emit('stack:windowOpen', {
-        stack: this.stack,
-        windowMs: this.windowMs,
-        message: `${actor.username} vừa dùng ${card.name}! Có ${this.windowMs / 1000} giây để phản đòn.`
-        });
+            // Broadcast cho tất cả: có 3 giây để can thiệp
+            this.io.to(this.roomCode).emit('stack:windowOpen', {
+            stack: this.stack,
+            windowMs: this.windowMs,
+            message: `${actor.username} vừa dùng ${card.name}! Có ${this.windowMs / 1000} giây để phản đòn.`
+            });
 
-        // Đặt timer tự động giải quyết
-        this._resetTimer();
+            // Đặt timer tự động giải quyết
+            this._resetTimer();
+        } catch (err) {
+            console.error('StackEngine.open lỗi:', err);
+        }
     }
 
     // Opponent push thẻ (+) vào stack để can thiệp
     interrupt(card, actor, target) {
-        if (!this.isOpen) {
-        throw new Error('Không trong cửa sổ Stack');
+        try {
+            if (!this.isOpen) {
+            throw new Error('Không trong cửa sổ Stack');
+            }
+            if (card.timing !== '+') {
+            throw new Error('Chỉ thẻ tức thời (+) mới có thể can thiệp');
+            }
+
+            // Hủy timer cũ, reset lại 3 giây
+            this._resetTimer();
+
+            this.stack.push({ card, actor, target, timestamp: Date.now() });
+
+            this.io.to(this.roomCode).emit('stack:interrupted', {
+            stack: this.stack,
+            interruptor: actor.username,
+            cardName: card.name,
+            message: `${actor.username} phản đòn bằng ${card.name}!`
+            });
+        } catch (err) {
+            console.error('StackEngine.interrupt lỗi:', err);
+            // Có lỗi vẫn tiếp tục game, chỉ log thôi
         }
-        if (card.timing !== '+') {
-        throw new Error('Chỉ thẻ tức thời (+) mới có thể can thiệp');
-        }
-
-        // Hủy timer cũ, reset lại 3 giây
-        this._resetTimer();
-
-        this.stack.push({ card, actor, target, timestamp: Date.now() });
-
-        this.io.to(this.roomCode).emit('stack:interrupted', {
-        stack: this.stack,
-        interruptor: actor.username,
-        cardName: card.name,
-        message: `${actor.username} phản đòn bằng ${card.name}!`
-        });
     }
 
     _resetTimer() {
@@ -61,36 +70,57 @@ export class StackEngine {
 
     // Giải quyết stack theo LIFO (vào sau ra trước)
     _resolve() {
-        this.isOpen = false;
-        const resolvedEffects = [];
+        try {
+            this.isOpen = false;
+            const resolvedEffects = [];
 
-        // Đảo ngược stack — thẻ đánh ra cuối cùng được xử lý trước
-        const reversed = [...this.stack].reverse();
+            const reversed = [...this.stack].reverse();
 
-        for (const entry of reversed) {
-        resolvedEffects.push({
-            card: entry.card,
-            actor: entry.actor.userId,
-            target: entry.target?.userId ?? null,
-            effect: entry.card.effect
-        });
+            for (const entry of reversed) {
+            // Guard — kiểm tra entry hợp lệ trước khi xử lý
+            if (!entry || !entry.card || !entry.actor) {
+                console.warn('StackEngine._resolve: entry không hợp lệ, bỏ qua', entry);
+                continue;
+            }
+
+            resolvedEffects.push({
+                card: entry.card,
+                actor: entry.actor.userId,
+                target: entry.target?.userId ?? null,
+                effect: entry.card.effect
+            });
+            }
+
+            this.io.to(this.roomCode).emit('stack:resolved', {
+            effects: resolvedEffects,
+            message: 'Stack giải quyết xong!'
+            });
+
+            const callbackEffects = [...resolvedEffects];
+            this.stack = [];
+            this.timer = null;
+
+            if (this.onResolve) {
+            this.onResolve(callbackEffects);
+            }
+
+        } catch (err) {
+            console.error('StackEngine._resolve lỗi:', err);
+            // Reset stack để game tiếp tục
+            this.stack = [];
+            this.timer = null;
+            this.isOpen = false;
+            // Báo client stack đã xong dù có lỗi
+            try {
+            this.io.to(this.roomCode).emit('stack:resolved', {
+                effects: [],
+                message: 'Stack giải quyết xong!'
+            });
+            } catch (e) {
+            console.error('Không thể emit stack:resolved:', e);
+            }
         }
-
-        this.io.to(this.roomCode).emit('stack:resolved', {
-        effects: resolvedEffects,
-        message: 'Stack giải quyết xong!'
-        });
-
-        // Clear stack
-        this.stack = [];
-        this.timer = null;
-
-        // Gọi callback để GameEngine xử lý từng effect
-        if (this.onResolve) {
-        this.onResolve(resolvedEffects);
         }
-    }
-
     clear() {
         if (this.timer) clearTimeout(this.timer);
         this.stack = [];

@@ -4,39 +4,50 @@ export class CombatEngine {
     }
 
     // Kiểm tra ô đích sau khi di chuyển xong
+    // Chỉ xảy ra lúc player vừa tới ô, không phải lần sau
     resolveCell(mover) {
         const cell = this.gs.board[mover.position];
         const results = [];
 
-        // Nhặt lương thực
+        // Ưu tiên 1: Nhặt lương thực trên shop
+        // Chỉ nhặt nếu: ô là shop, có lương thực, và mover là người duy nhất đứng đó
         if (cell.type === 'shop' && cell.food > 0 && cell.occupants.length === 1) {
-        const picked = this._pickupFood(mover, cell);
-        results.push(picked);
-        return results;
+            const picked = this._pickupFood(mover, cell);
+            results.push(picked);
+            return results; // Dừng tại đây, không xử lý combat
         }
 
-        // Húc văng nếu có người khác đứng đó
+        // Ưu tiên 2: Xử lý combat (húc văng) nếu có người khác đứng cùng ô
         const others = cell.occupants
-        .filter(id => id !== mover.userId)
-        .map(id => this._getPlayer(id));
+            .filter(id => id !== mover.userId)
+            .map(id => this._getPlayer(id));
 
-        for (const victim of others) {
-        const pushResult = this._pushPlayer(mover, victim);
-        results.push(pushResult);
+        if (others.length > 0) {
+            for (const victim of others) {
+                const pushResult = this._pushPlayer(mover, victim);
+                results.push(pushResult);
+            }
         }
 
         return results;
     }
 
+    // Nhặt 1 lương thực từ ô shop
+    // Mỗi lần player tới ô shop: -1 food từ ô, +1 food cho player
     _pickupFood(player, cell) {
+        if (cell.type !== 'shop' || cell.food <= 0) {
+            throw new Error('Không thể nhặt lương thực từ ô này');
+        }
+
         cell.food -= 1;
         player.foodCount += 1;
+
         return {
-        type: 'pickup',
-        playerId: player.userId,
-        cellId: cell.id,
-        newFood: cell.food,
-        playerFood: player.foodCount
+            type: 'pickup',
+            playerId: player.userId,
+            cellId: cell.id,
+            newFood: cell.food,  // Số lương thực còn lại trên shop
+            playerFood: player.foodCount  // Số lương thực mới của player
         };
     }
 
