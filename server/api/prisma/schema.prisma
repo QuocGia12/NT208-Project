@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+
+enum CardRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+model User {
+  id           String          @id @default(cuid())
+  username     String          @unique
+  passwordHash String
+  avatar       String?
+  elo          Int             @default(1000)
+  coins        Int             @default(0)
+  gems         Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  friendshipsInitiated Friendship[]   @relation("FriendshipInitiator")
+  friendshipsReceived  Friendship[]   @relation("FriendshipReceiver")
+  inventoryItems       UserInventory[]
+  wonMatches           MatchHistory[] @relation("MatchWinner")
+  matchParticipations  MatchParticipant[]
+  sentMessages         ChatMessage[]  @relation("ChatMessageSender")
+  receivedMessages     ChatMessage[]  @relation("ChatMessageReceiver")
+}
+
+model Friendship {
+  id        String           @id @default(cuid())
+  user1Id   String
+  user2Id   String
+  status    FriendshipStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user1 User @relation("FriendshipInitiator", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2 User @relation("FriendshipReceiver", fields: [user2Id], references: [id], onDelete: Cascade)
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+}
+
+model Card {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  name        String
+  description String?
+  imageUrl    String?
+  rarity      CardRarity  @default(COMMON)
+  priceCoins  Int         @default(0)
+  priceGems   Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  inventories UserInventory[]
+}
+
+model UserInventory {
+  id         String   @id @default(cuid())
+  userId     String
+  cardId     String
+  quantity   Int      @default(1)
+  acquiredAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cardId])
+  @@index([cardId])
+}
+
+model MatchHistory {
+  id              String   @id @default(cuid())
+  winnerId        String?
+  playedAt        DateTime @default(now())
+  rounds          Int?
+  durationSeconds Int?
+  summary         Json?
+
+  winner       User?              @relation("MatchWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  participants MatchParticipant[]
+
+  @@index([winnerId])
+  @@index([playedAt])
+}
+
+model MatchParticipant {
+  id       String @id @default(cuid())
+  matchId  String
+  userId   String
+  foodBags Int    @default(0)
+
+  match MatchHistory @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, userId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ChatMessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, createdAt])
+  @@index([receiverId, createdAt])
+  @@index([createdAt])
+}

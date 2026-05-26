@@ -1,0 +1,27 @@
+{
+  "name": "logic-game2-formatted",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "client",
+    "server/api",
+    "server/game",
+    "shared"
+  ],
+  "scripts": {
+    "db:up": "docker compose up -d postgres redis",
+    "db:down": "docker compose down",
+    "db:restart": "docker compose down && docker compose up -d postgres redis",
+    "db:logs": "docker compose logs -f postgres redis",
+    "db:migrate": "npm run prisma:migrate --prefix server/api",
+    "db:studio": "npm run prisma:studio --prefix server/api",
+    "dev": "concurrently \"npm run db:up\" \"npm run dev:server:game\" \"npm run dev:server:api\" \"npm run dev:client\"",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server:game": "npm run dev --prefix server/game",
+    "dev:server:api": "npm run dev --prefix server/api",
+    "build": "npm run build --prefix server/game && npm run build --prefix server/api && npm run build --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
