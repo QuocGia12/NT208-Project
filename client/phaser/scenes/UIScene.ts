@@ -1,7 +1,8 @@
-﻿import * as Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { SocketClient } from '../../lib/SocketClient';
 import {
   CardState,
+  CardType,
   Direction,
   Phase,
   Phase1Context,
@@ -10,6 +11,9 @@ import {
   PublicGameState,
   PublicPlayerState,
 } from '../../types/game';
+import { getCardTextureKey } from '../assets/gameUIAssets';
+import { GAME_CANVAS, GAME_UI_LAYOUT } from '../layout/gameUILayout';
+import { drawActionButtonFace, drawOrnatePanel } from '../layout/gameUITheme';
 import { CardPanel } from '../objects/CardPanel';
 import { DiceDisplay } from '../objects/DiceDisplay';
 import { PlayerInfoPanel } from '../objects/PlayerInfoPanel';
@@ -18,6 +22,7 @@ import { TimerBar } from '../objects/TimerBar';
 type RevealPopup = {
   container: Phaser.GameObjects.Container;
   title: Phaser.GameObjects.Text;
+  cardImage: Phaser.GameObjects.Image;
   cardText: Phaser.GameObjects.Text;
 };
 
@@ -33,7 +38,7 @@ type GameOverOverlay = {
   button: Phaser.GameObjects.Container;
 };
 
-type StopPhaseButton = {
+type ActionButton = {
   container: Phaser.GameObjects.Container;
   label: Phaser.GameObjects.Text;
 };
@@ -48,9 +53,8 @@ type DiscardOverlay = {
 };
 
 type MovementPadButton = {
-  container: Phaser.GameObjects.Container;
-  background: Phaser.GameObjects.Graphics;
-  label: Phaser.GameObjects.Text;
+  container: Phaser.GameObjects.Zone;
+  overlay: Phaser.GameObjects.Graphics;
   direction: Direction;
   enabled: boolean;
 };
@@ -69,7 +73,8 @@ export class UIScene extends Phaser.Scene {
   private revealPopup!: RevealPopup;
   private eliminationBanner!: EliminationBanner;
   private gameOverOverlay!: GameOverOverlay;
-  private stopPhaseButton!: StopPhaseButton;
+  private stopPhaseButton!: ActionButton;
+  private waitButton!: ActionButton;
   private discardOverlay!: DiscardOverlay;
   private movementPad!: MovementPad;
 
@@ -95,21 +100,20 @@ export class UIScene extends Phaser.Scene {
   create(): void {
     this.localPlayerId = String(this.game.registry.get('playerId') ?? '');
 
-    this.createLayoutPanels();
-
-    this.diceDisplay = new DiceDisplay(this, 1180, 220);
-    this.timerBar = new TimerBar(this, 640, 24, 300, 8);
-    this.cardPanel = new CardPanel(this, 640, 670, 860);
-    this.playerInfoPanel = new PlayerInfoPanel(this, 100, 95, 190, 145);
+    this.diceDisplay = new DiceDisplay(this, GAME_UI_LAYOUT.dice.centerX, GAME_UI_LAYOUT.dice.centerY);
+    this.timerBar = new TimerBar(this, GAME_UI_LAYOUT.board.centerX, 28, 300, 8);
+    this.cardPanel = new CardPanel(this, GAME_UI_LAYOUT.cardPanel.centerX, GAME_UI_LAYOUT.cardPanel.centerY);
+    this.playerInfoPanel = new PlayerInfoPanel(this, 193, 136, 244, 136);
 
     this.cardPanel.setOnCardClick(() => {
-      // BoardScene receives card-clicked via CardPanel emission.
+      // BoardScene listens for the emitted card-clicked event.
     });
 
     this.createRevealPopup();
     this.createEliminationBanner();
     this.createGameOverOverlay();
     this.createStopPhaseButton();
+    this.createWaitButton();
     this.createDiscardOverlay();
     this.createMovementPad();
 
@@ -168,6 +172,7 @@ export class UIScene extends Phaser.Scene {
     this.eliminationBanner.container.destroy(true);
     this.gameOverOverlay.container.destroy(true);
     this.stopPhaseButton.container.destroy(true);
+    this.waitButton.container.destroy(true);
     this.discardOverlay.container.destroy(true);
     this.movementPad.container.destroy(true);
   }
@@ -192,8 +197,8 @@ export class UIScene extends Phaser.Scene {
 
     this.cardPanel.render(this.myHand, this.myPlayableCards, this.helperHighlightCardIds);
     if (this.discardOverlay.container.visible) {
-      this.discardSelected.forEach(cardId => {
-        if (!this.myHand.some(card => card.id === cardId)) {
+      this.discardSelected.forEach((cardId) => {
+        if (!this.myHand.some((card) => card.id === cardId)) {
           this.discardSelected.delete(cardId);
         }
       });
@@ -206,9 +211,11 @@ export class UIScene extends Phaser.Scene {
     this.cardPanel.render(this.myHand, this.myPlayableCards, this.helperHighlightCardIds);
   }
 
-  private onDiscardRequired(data: any): void {
-    const requiredCount = typeof data?.requiredCount === 'number' ? data.requiredCount : 0;
-    const expiresAt = typeof data?.expiresAt === 'number' ? data.expiresAt : Date.now();
+  private onDiscardRequired(data: unknown): void {
+    const payload = this.asRecord(data);
+    const requiredCount = typeof payload?.requiredCount === 'number' ? payload.requiredCount : 0;
+    const expiresAt = typeof payload?.expiresAt === 'number' ? payload.expiresAt : Date.now();
+
     if (requiredCount <= 0) {
       this.hideDiscardOverlay();
       return;
@@ -229,22 +236,25 @@ export class UIScene extends Phaser.Scene {
     this.flashMovementPadButton(direction);
   }
 
-  private onCardPublicReveal(data: any): void {
-    const playerName = typeof data?.playerName === 'string' ? data.playerName : 'NgÆ°á»i chÆ¡i';
-    const cardName = typeof data?.card?.displayName === 'string' ? data.card.displayName : 'Tháº» bÃ­ áº©n';
-    this.showRevealPopup(`${playerName} rÃºt Ä‘Æ°á»£c:`, cardName);
+  private onCardPublicReveal(data: unknown): void {
+    const payload = this.asRecord(data);
+    const card = this.asRecord(payload?.card);
+    const playerName = typeof payload?.playerName === 'string' ? payload.playerName : 'Nguoi choi';
+    const cardName = typeof card?.displayName === 'string' ? card.displayName : 'The bi an';
+    const cardType = typeof card?.type === 'string' ? (card.type as CardType) : null;
+    this.showRevealPopup(`${playerName} rut duoc:`, cardName, cardType);
   }
 
   private onCardRevealEnded(): void {
     this.hideRevealPopup();
   }
 
-  private onPlayerEliminated(data: any): void {
-    const playerName = typeof data?.playerName === 'string' ? data.playerName : 'NgÆ°á»i chÆ¡i';
+  private onPlayerEliminated(data: unknown): void {
+    const payload = this.asRecord(data);
+    const playerName = typeof payload?.playerName === 'string' ? payload.playerName : 'Nguoi choi';
+    const cellsLost = typeof payload?.cellsLost === 'number' ? payload.cellsLost : 0;
 
-    // Test 7: respawn banner instead of elimination
-    const cellsLost = typeof data?.cellsLost === 'number' ? data.cellsLost : 0;
-    this.eliminationBanner.text.setText(`${playerName} bá»‹ káº¹t! Máº¥t ${cellsLost} Ã´, há»“i sinh!`);
+    this.eliminationBanner.text.setText(`${playerName} bi ket! Mat ${cellsLost} o, hoi sinh!`);
     this.eliminationBanner.container.setVisible(true);
     this.eliminationBanner.container.alpha = 0;
 
@@ -275,35 +285,41 @@ export class UIScene extends Phaser.Scene {
     });
   }
 
-  private onGameOver(data: any): void {
-    // Test 7: Team-based winner
-    const winnerNames = Array.isArray(data?.winner?.playerNames)
-      ? data.winner.playerNames.join(' & ')
+  private onGameOver(data: unknown): void {
+    const payload = this.asRecord(data);
+    const winner = this.asRecord(payload?.winner);
+    const winnerNames = Array.isArray(winner?.playerNames)
+      ? winner.playerNames.filter((name): name is string => typeof name === 'string').join(' & ')
       : 'Unknown';
-    const teamId = data?.winner?.teamId ?? '';
-    this.gameOverOverlay.title.setText(`Team tháº¯ng: ${teamId}\n${winnerNames}`);
+    const teamId = typeof winner?.teamId === 'string' ? winner.teamId : '';
+
+    this.gameOverOverlay.title.setText(`Team thang: ${teamId}\n${winnerNames}`);
     this.setStopPhaseButtonVisible(false);
+    this.setWaitButtonVisible(false);
     this.setMovementPadVisible(false);
 
     const statsLines: string[] = [];
-    const finalPlayers = (data?.finalState?.players ?? []) as PublicPlayerState[];
-    if (Array.isArray(finalPlayers) && finalPlayers.length > 0) {
+    const finalState = this.asRecord(payload?.finalState);
+    const finalPlayers = Array.isArray(finalState?.players) ? (finalState.players as PublicPlayerState[]) : [];
+    if (finalPlayers.length > 0) {
       finalPlayers
         .slice()
         .sort((a, b) => a.turnIndex - b.turnIndex)
-        .forEach(player => {
+        .forEach((player) => {
           const teamLabel = player.teamId === 'team1' ? '[T1]' : '[T2]';
-          statsLines.push(`${teamLabel} ${player.name}: ${player.claimedCount}/5 Ã´`);
+          statsLines.push(`${teamLabel} ${player.name}: ${player.claimedCount}/5 o`);
         });
     }
 
-    // Show team totals
-    const claimedByTeam = data?.stats?.claimedByTeam as Record<string, number> | undefined;
+    const stats = this.asRecord(payload?.stats);
+    const claimedByTeam = this.asRecord(stats?.claimedByTeam);
     if (claimedByTeam) {
       statsLines.push('');
-      for (const [tid, count] of Object.entries(claimedByTeam)) {
-        statsLines.push(`${tid}: ${count}/10`);
-      }
+      Object.entries(claimedByTeam).forEach(([tid, count]) => {
+        if (typeof count === 'number') {
+          statsLines.push(`${tid}: ${count}/10`);
+        }
+      });
     }
 
     this.gameOverOverlay.stats.setText(statsLines.join('\n'));
@@ -325,19 +341,21 @@ export class UIScene extends Phaser.Scene {
 
     if (state.currentPhase === Phase.PICK_SPAWN) {
       this.timerBar.stop();
-      this.timerBar.showLabel(isMyTurn ? 'Chá»n Ã´ xuáº¥t phÃ¡t...' : 'NgÆ°á»i khÃ¡c Ä‘ang chá»n Ã´ xuáº¥t phÃ¡t');
+      this.timerBar.showLabel(isMyTurn ? 'Chon o xuat phat...' : 'Nguoi choi khac dang chon o xuat phat');
       this.diceDisplay.hide();
       this.setStopPhaseButtonVisible(false);
+      this.setWaitButtonVisible(false);
       this.setMovementPadVisible(false);
       return;
     }
 
     if (state.currentPhase === Phase.DRAW_CARD) {
       this.timerBar.stop();
-      this.timerBar.showLabel('RÃºt bÃ i...');
+      this.timerBar.showLabel('Rut bai...');
       this.diceDisplay.hide();
       this.rollingShown = false;
       this.setStopPhaseButtonVisible(false);
+      this.setWaitButtonVisible(false);
       this.setMovementPadVisible(false);
       return;
     }
@@ -347,18 +365,20 @@ export class UIScene extends Phaser.Scene {
       this.timerBar.stop();
 
       if (phase1.diceResult === null) {
-        this.timerBar.showLabel('Äang Ä‘á»• xÃºc xáº¯c...');
+        this.timerBar.showLabel('Dang do xuc xac...');
         if (!this.rollingShown) {
           const duration = Math.max(200, phase1.rollEndAt - Date.now());
           this.diceDisplay.rollAnimation(duration);
           this.rollingShown = true;
         }
       } else {
-        this.timerBar.showLabel(`XÃºc xáº¯c: ${phase1.diceResult}`);
+        this.timerBar.showLabel(`Xuc xac: ${phase1.diceResult}`);
         this.diceDisplay.showResult(phase1.diceResult);
         this.rollingShown = false;
       }
+
       this.setStopPhaseButtonVisible(false);
+      this.setWaitButtonVisible(false);
       this.setMovementPadVisible(false);
       return;
     }
@@ -366,10 +386,11 @@ export class UIScene extends Phaser.Scene {
     if (state.currentPhase === Phase.MOVE && state.phaseContext.phase === 3) {
       const phase2 = state.phaseContext as Phase2Context;
       this.timerBar.stop();
-      this.timerBar.showLabel(`Di chuyá»ƒn: ${phase2.stepsRemaining} bÆ°á»›c`);
+      this.timerBar.showLabel(`Di chuyen: ${phase2.stepsRemaining} buoc`);
       this.diceDisplay.showResult(phase2.diceResult);
       this.rollingShown = false;
       this.setStopPhaseButtonVisible(false);
+      this.setWaitButtonVisible(false);
       this.setMovementPadVisible(isMyTurn);
       if (isMyTurn) {
         this.updateMovementPad(phase2.validDirections);
@@ -382,11 +403,12 @@ export class UIScene extends Phaser.Scene {
       && (state.phaseContext.phase === 2 || state.phaseContext.phase === 4)
     ) {
       const phase3 = state.phaseContext as Phase3Context;
-      const phaseLabel = phase3.phase === 2 ? 'Phase 2: DÃ¹ng bÃ i (60s)' : 'Phase 4: DÃ¹ng bÃ i (60s)';
+      const phaseLabel = phase3.phase === 2 ? 'Phase 2: Dung bai (60s)' : 'Phase 4: Dung bai (60s)';
       this.timerBar.showLabel(phaseLabel);
       this.timerBar.startCountdown(phase3.timerExpiresAt);
       this.rollingShown = false;
       this.setStopPhaseButtonVisible(isMyTurn);
+      this.setWaitButtonVisible(isMyTurn);
       this.setMovementPadVisible(false);
       return;
     }
@@ -394,6 +416,7 @@ export class UIScene extends Phaser.Scene {
     this.timerBar.stop();
     this.timerBar.showLabel('');
     this.setStopPhaseButtonVisible(false);
+    this.setWaitButtonVisible(false);
     this.setMovementPadVisible(false);
   }
 
@@ -403,82 +426,67 @@ export class UIScene extends Phaser.Scene {
       return;
     }
 
-    const player = state.players.find(p => p.id === state.publicReveal?.playerId);
-    const playerName = player?.name ?? 'NgÆ°á»i chÆ¡i';
-    this.showRevealPopup(`${playerName} rÃºt Ä‘Æ°á»£c:`, state.publicReveal.card.displayName);
-  }
-
-  private createLayoutPanels(): void {
-    const g = this.add.graphics();
-    g.setDepth(70);
-
-    // Left panel
-    g.fillStyle(0x0e162a, 0.82);
-    g.fillRect(0, 0, 200, 720);
-    g.lineStyle(2, 0x273b68, 0.9);
-    g.strokeRect(0, 0, 200, 720);
-
-    // Right panel
-    g.fillStyle(0x0e162a, 0.82);
-    g.fillRect(1080, 0, 200, 720);
-    g.lineStyle(2, 0x273b68, 0.9);
-    g.strokeRect(1080, 0, 200, 720);
-
-    // Bottom bar
-    g.fillStyle(0x0b1325, 0.9);
-    g.fillRect(200, 620, 880, 100);
-    g.lineStyle(2, 0x273b68, 0.9);
-    g.strokeRect(200, 620, 880, 100);
+    const player = state.players.find((item) => item.id === state.publicReveal?.playerId);
+    const playerName = player?.name ?? 'Nguoi choi';
+    this.showRevealPopup(
+      `${playerName} rut duoc:`,
+      state.publicReveal.card.displayName,
+      state.publicReveal.card.type,
+    );
   }
 
   private createRevealPopup(): void {
     const bg = this.add.graphics();
-    bg.fillStyle(0x0f1830, 0.96);
-    bg.fillRoundedRect(-210, -62, 420, 124, 12);
-    bg.lineStyle(2, 0xf1c40f, 0.95);
-    bg.strokeRoundedRect(-210, -62, 420, 124, 12);
+    drawOrnatePanel(bg, -190, -132, 380, 264, 18);
 
-    const title = this.add.text(0, -18, '', {
-      fontFamily: 'Arial',
-      fontSize: '20px',
+    const title = this.add.text(0, -98, '', {
+      fontFamily: '"Playpen Sans", cursive',
+      fontSize: '18px',
       color: '#f5d56f',
       fontStyle: 'bold',
       align: 'center',
+      wordWrap: { width: 260 },
     });
     title.setOrigin(0.5);
 
-    const cardText = this.add.text(0, 20, '', {
-      fontFamily: 'Arial',
-      fontSize: '24px',
-      color: '#ffffff',
+    const cardImage = this.add.image(0, 6, 'ui-card-zodiac-tys');
+    cardImage.setDisplaySize(110, 162);
+
+    const cardText = this.add.text(0, 98, '', {
+      fontFamily: '"Playpen Sans", cursive',
+      fontSize: '14px',
+      color: '#fff8dd',
       fontStyle: 'bold',
       align: 'center',
+      wordWrap: { width: 220 },
     });
     cardText.setOrigin(0.5);
 
-    const container = this.add.container(640, 300, [bg, title, cardText]);
+    const container = this.add.container(GAME_CANVAS.width / 2, 322, [bg, title, cardImage, cardText]);
     container.setDepth(300);
     container.setVisible(false);
 
-    this.revealPopup = { container, title, cardText };
+    this.revealPopup = { container, title, cardImage, cardText };
   }
 
   private createEliminationBanner(): void {
     const bg = this.add.graphics();
     bg.fillStyle(0x4a1f1f, 0.94);
-    bg.fillRoundedRect(-280, -22, 560, 44, 10);
-    bg.lineStyle(2, 0xff8b8b, 0.95);
-    bg.strokeRoundedRect(-280, -22, 560, 44, 10);
+    bg.fillRoundedRect(-290, -24, 580, 48, 12);
+    bg.lineStyle(3, 0x8b2e2e, 0.95);
+    bg.strokeRoundedRect(-290, -24, 580, 48, 12);
+    bg.lineStyle(1.5, 0xffd0c6, 0.7);
+    bg.strokeRoundedRect(-282, -16, 564, 32, 8);
 
     const text = this.add.text(0, 0, '', {
-      fontFamily: 'Arial',
+      fontFamily: 'Georgia',
       fontSize: '20px',
-      color: '#ffe6e6',
+      color: '#fff0e8',
       fontStyle: 'bold',
     });
     text.setOrigin(0.5);
 
-    const container = this.add.container(640, 58, [bg, text]);
+    const container = this.add.container(GAME_CANVAS.width / 2, 58, [bg, text]);
     container.setDepth(310);
     container.setVisible(false);
 
@@ -487,17 +495,14 @@ export class UIScene extends Phaser.Scene {
 
   private createGameOverOverlay(): void {
     const backdrop = this.add.graphics();
-    backdrop.fillStyle(0x000000, 0.72);
-    backdrop.fillRect(0, 0, 1280, 720);
+    backdrop.fillStyle(0x05080d, 0.8);
+    backdrop.fillRect(0, 0, GAME_CANVAS.width, GAME_CANVAS.height);
 
     const panel = this.add.graphics();
-    panel.fillStyle(0x111c35, 0.97);
-    panel.fillRoundedRect(-260, -190, 520, 380, 14);
-    panel.lineStyle(2, 0x3a5ea1, 0.95);
-    panel.strokeRoundedRect(-260, -190, 520, 380, 14);
+    drawOrnatePanel(panel, -270, -200, 540, 400, 18);
 
     const title = this.add.text(0, -130, 'Game Over', {
-      fontFamily: 'Arial',
+      fontFamily: 'Georgia',
       fontSize: '42px',
       color: '#ffe58c',
       fontStyle: 'bold',
@@ -506,24 +511,21 @@ export class UIScene extends Phaser.Scene {
     title.setOrigin(0.5);
 
     const stats = this.add.text(0, -10, '', {
-      fontFamily: 'Arial',
-      fontSize: '22px',
-      color: '#d9e6ff',
+      fontFamily: 'Georgia',
+      fontSize: '21px',
+      color: '#e3ecff',
       align: 'center',
       lineSpacing: 8,
     });
     stats.setOrigin(0.5);
 
     const buttonBg = this.add.graphics();
-    buttonBg.fillStyle(0x2f6cff, 0.96);
-    buttonBg.fillRoundedRect(-110, -24, 220, 48, 10);
-    buttonBg.lineStyle(2, 0x8eb6ff, 0.9);
-    buttonBg.strokeRoundedRect(-110, -24, 220, 48, 10);
+    drawActionButtonFace(buttonBg, 220, 50);
 
     const buttonText = this.add.text(0, 0, 'Ve Lobby', {
-      fontFamily: 'Arial',
+      fontFamily: 'Georgia',
       fontSize: '22px',
-      color: '#ffffff',
+      color: '#fff5d5',
       fontStyle: 'bold',
     });
     buttonText.setOrigin(0.5);
@@ -531,7 +533,6 @@ export class UIScene extends Phaser.Scene {
     const button = this.add.container(0, 130, [buttonBg, buttonText]);
     button.setSize(220, 48);
     button.setInteractive(new Phaser.Geom.Rectangle(-110, -24, 220, 48), Phaser.Geom.Rectangle.Contains);
-
     button.on('pointerover', () => {
       button.setScale(1.04);
     });
@@ -548,80 +549,76 @@ export class UIScene extends Phaser.Scene {
       }
     });
 
-    const container = this.add.container(640, 360, [backdrop, panel, title, stats, button]);
-    container.setDepth(350);
-    container.setVisible(false);
-
-    this.gameOverOverlay = {
-      container,
+    const container = this.add.container(GAME_CANVAS.width / 2, GAME_CANVAS.height / 2, [
+      backdrop,
+      panel,
       title,
       stats,
       button,
-    };
+    ]);
+    container.setDepth(350);
+    container.setVisible(false);
+
+    this.gameOverOverlay = { container, title, stats, button };
   }
 
   private createDiscardOverlay(): void {
     const backdrop = this.add.graphics();
-    backdrop.fillStyle(0x000000, 0.72);
-    backdrop.fillRect(0, 0, 1280, 720);
+    backdrop.fillStyle(0x05080d, 0.8);
+    backdrop.fillRect(0, 0, GAME_CANVAS.width, GAME_CANVAS.height);
 
     const panel = this.add.graphics();
-    panel.fillStyle(0x152443, 0.98);
-    panel.fillRoundedRect(-360, -170, 720, 340, 14);
-    panel.lineStyle(2, 0x6f9eff, 0.95);
-    panel.strokeRoundedRect(-360, -170, 720, 340, 14);
+    drawOrnatePanel(panel, -390, -182, 780, 364, 18);
 
-    const instruction = this.add.text(0, -120, '', {
-      fontFamily: 'Arial',
+    const instruction = this.add.text(0, -128, '', {
+      fontFamily: 'Georgia',
       fontSize: '24px',
-      color: '#f4f8ff',
+      color: '#fff4d3',
       fontStyle: 'bold',
       align: 'center',
     });
     instruction.setOrigin(0.5);
 
-    const timerText = this.add.text(0, -84, '', {
+    const timerText = this.add.text(0, -92, '', {
       fontFamily: 'Arial',
       fontSize: '20px',
-      color: '#ffd46b',
+      color: '#f6d178',
       align: 'center',
     });
     timerText.setOrigin(0.5);
 
-    const cardsRoot = this.add.container(0, 0);
+    const cardsRoot = this.add.container(0, 4);
 
     const confirmBg = this.add.graphics();
-    confirmBg.fillStyle(0x2f6cff, 0.96);
-    confirmBg.fillRoundedRect(-90, -22, 180, 44, 10);
-    confirmBg.lineStyle(2, 0x8eb6ff, 0.95);
-    confirmBg.strokeRoundedRect(-90, -22, 180, 44, 10);
+    drawActionButtonFace(confirmBg, 180, 44);
 
-    const confirmLabel = this.add.text(0, 0, 'XÃ¡c nháº­n', {
-      fontFamily: 'Arial',
+    const confirmLabel = this.add.text(0, 0, 'Xac nhan', {
+      fontFamily: 'Georgia',
       fontSize: '20px',
-      color: '#ffffff',
+      color: '#fff3cc',
       fontStyle: 'bold',
     });
     confirmLabel.setOrigin(0.5);
 
-    const confirmButton = this.add.container(0, 120, [confirmBg, confirmLabel]);
+    const confirmButton = this.add.container(0, 130, [confirmBg, confirmLabel]);
     confirmButton.setSize(180, 44);
-    confirmButton.setInteractive(
-      new Phaser.Geom.Rectangle(-90, -22, 180, 44),
-      Phaser.Geom.Rectangle.Contains,
-    );
+    confirmButton.setInteractive(new Phaser.Geom.Rectangle(-90, -22, 180, 44), Phaser.Geom.Rectangle.Contains);
     confirmButton.on('pointerover', () => {
-      if (confirmButton.alpha >= 0.99) confirmButton.setScale(1.04);
+      if (confirmButton.alpha >= 0.99) {
+        confirmButton.setScale(1.04);
+      }
     });
     confirmButton.on('pointerout', () => {
       confirmButton.setScale(1);
     });
     confirmButton.on('pointerdown', () => {
-      if (this.discardSelected.size !== this.discardRequiredCount) return;
+      if (this.discardSelected.size !== this.discardRequiredCount) {
+        return;
+      }
       SocketClient.getInstance().sendDiscardCards([...this.discardSelected]);
     });
 
-    const container = this.add.container(640, 360, [
+    const container = this.add.container(GAME_CANVAS.width / 2, GAME_CANVAS.height / 2, [
       backdrop,
       panel,
       instruction,
@@ -646,8 +643,8 @@ export class UIScene extends Phaser.Scene {
     this.discardOverlay.cardsRoot.removeAll(true);
 
     const cards = [...this.myHand];
-    const cardWidth = 128;
-    const cardHeight = 64;
+    const cardWidth = 142;
+    const cardHeight = 72;
     const gap = 14;
     const totalWidth = cards.length * cardWidth + Math.max(0, cards.length - 1) * gap;
     const startX = -totalWidth / 2 + cardWidth / 2;
@@ -655,30 +652,34 @@ export class UIScene extends Phaser.Scene {
     cards.forEach((card, index) => {
       const cardX = startX + index * (cardWidth + gap);
       const selected = this.discardSelected.has(card.id);
+      const texture = getCardTextureKey(card.type);
 
-      const cardContainer = this.add.container(cardX, 6);
-      cardContainer.setSize(cardWidth, cardHeight);
+      const image = this.add.image(0, 0, texture);
+      image.setDisplaySize(cardWidth, cardHeight);
+
+      const outline = this.add.graphics();
+      outline.lineStyle(selected ? 4 : 2, selected ? 0xffa8a0 : 0xf0d68c, selected ? 1 : 0.65);
+      outline.strokeRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 12);
+      if (selected) {
+        outline.fillStyle(0x4f1410, 0.28);
+        outline.fillRoundedRect(-cardWidth / 2 + 2, -cardHeight / 2 + 2, cardWidth - 4, cardHeight - 4, 10);
+      }
+
+      const caption = this.add.text(0, cardHeight / 2 + 16, card.displayName, {
+        fontFamily: 'Georgia',
+        fontSize: '13px',
+        color: selected ? '#ffd7d1' : '#fff6dc',
+        align: 'center',
+      });
+      caption.setOrigin(0.5);
+
+      const cardContainer = this.add.container(cardX, 6, [image, outline, caption]);
+      cardContainer.setSize(cardWidth, cardHeight + 30);
       cardContainer.setInteractive(
         new Phaser.Geom.Rectangle(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight),
         Phaser.Geom.Rectangle.Contains,
       );
 
-      const g = this.add.graphics();
-      g.fillStyle(selected ? 0x5d1e1e : 0x243559, 0.96);
-      g.fillRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 10);
-      g.lineStyle(2.5, selected ? 0xff7f7f : 0x8eb6ff, 0.95);
-      g.strokeRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 10);
-
-      const text = this.add.text(0, 0, card.displayName, {
-        fontFamily: 'Arial',
-        fontSize: '14px',
-        color: '#f4f8ff',
-        align: 'center',
-        wordWrap: { width: cardWidth - 14, useAdvancedWrap: true },
-      });
-      text.setOrigin(0.5);
-
-      cardContainer.add([g, text]);
       cardContainer.on('pointerdown', () => {
         if (this.discardSelected.has(card.id)) {
           this.discardSelected.delete(card.id);
@@ -698,18 +699,24 @@ export class UIScene extends Phaser.Scene {
     });
 
     const selectedCount = this.discardSelected.size;
-    this.discardOverlay.instruction.setText(`Chá»n ${this.discardRequiredCount} lÃ¡ bÃ i Ä‘á»ƒ bá» (${selectedCount}/${this.discardRequiredCount})`);
+    this.discardOverlay.instruction.setText(
+      `Chon ${this.discardRequiredCount} la bai de bo (${selectedCount}/${this.discardRequiredCount})`,
+    );
+
     const canConfirm = selectedCount === this.discardRequiredCount;
     this.discardOverlay.confirmButton.alpha = canConfirm ? 1 : 0.45;
     this.discardOverlay.confirmButton.setScale(1);
-    this.discardOverlay.confirmLabel.setText(canConfirm ? 'XÃ¡c nháº­n' : 'Chá»n Ä‘á»§ lÃ¡');
+    this.discardOverlay.confirmLabel.setText(canConfirm ? 'Xac nhan' : 'Chon du la');
   }
 
   private updateDiscardOverlayTimer(): void {
-    if (!this.discardOverlay.container.visible) return;
+    if (!this.discardOverlay.container.visible) {
+      return;
+    }
+
     const remainingMs = Math.max(0, this.discardExpiresAt - Date.now());
     const remainingSec = Math.ceil(remainingMs / 1000);
-    this.discardOverlay.timerText.setText(`Tá»± Ä‘á»™ng random sau: ${remainingSec}s`);
+    this.discardOverlay.timerText.setText(`Tu dong random sau: ${remainingSec}s`);
   }
 
   private hideDiscardOverlay(): void {
@@ -721,159 +728,168 @@ export class UIScene extends Phaser.Scene {
   }
 
   private createMovementPad(): void {
-    const root = this.add.container(1180, 520);
+    const root = this.add.container(GAME_UI_LAYOUT.movementPad.centerX, GAME_UI_LAYOUT.movementPad.centerY);
     root.setDepth(135);
     root.setVisible(false);
 
-    const title = this.add.text(0, -92, 'Di chuyá»ƒn', {
-      fontFamily: 'Arial',
-      fontSize: '15px',
-      color: '#cfdcff',
-      fontStyle: 'bold',
-    });
-    title.setOrigin(0.5);
-    root.add(title);
+    const base = this.add.image(0, 0, 'ui-movement-pad');
+    base.setDisplaySize(
+      Math.round(GAME_UI_LAYOUT.movementPad.width),
+      Math.round(GAME_UI_LAYOUT.movementPad.height),
+    );
+    root.add(base);
 
-    const buttons = new Map<Direction, MovementPadButton>();
-    const buttonSpecs: Array<{ direction: Direction; x: number; y: number; label: string }> = [
-      { direction: Direction.UP, x: 0, y: -54, label: '^' },
-      { direction: Direction.LEFT, x: -54, y: 0, label: '<' },
-      { direction: Direction.RIGHT, x: 54, y: 0, label: '>' },
-      { direction: Direction.DOWN, x: 0, y: 54, label: 'v' },
+    const buttonSpecs: Array<{ direction: Direction; x: number; y: number; width: number; height: number }> = [
+      { direction: Direction.UP, x: 0, y: -72, width: 70, height: 70 },
+      { direction: Direction.LEFT, x: -74, y: 0, width: 70, height: 70 },
+      { direction: Direction.RIGHT, x: 74, y: 0, width: 70, height: 70 },
+      { direction: Direction.DOWN, x: 0, y: 72, width: 70, height: 70 },
     ];
 
-    for (const spec of buttonSpecs) {
-      const background = this.add.graphics();
-      const label = this.add.text(0, -1, spec.label, {
-        fontFamily: 'Arial',
-        fontSize: '24px',
-        color: '#f4f8ff',
-        fontStyle: 'bold',
-      });
-      label.setOrigin(0.5);
+    const buttons = new Map<Direction, MovementPadButton>();
 
-      const buttonContainer = this.add.container(spec.x, spec.y, [background, label]);
-      buttonContainer.setSize(46, 46);
-      buttonContainer.setInteractive(
-        new Phaser.Geom.Rectangle(-23, -23, 46, 46),
-        Phaser.Geom.Rectangle.Contains,
-      );
+    buttonSpecs.forEach((spec) => {
+      const overlay = this.add.graphics();
+      const hitZone = this.add.zone(spec.x, spec.y, spec.width, spec.height);
+      hitZone.setOrigin(0.5);
+      hitZone.setInteractive();
 
       const button: MovementPadButton = {
-        container: buttonContainer,
-        background,
-        label,
+        container: hitZone,
+        overlay,
         direction: spec.direction,
         enabled: false,
       };
 
-      buttonContainer.on('pointerover', () => {
-        if (button.enabled) buttonContainer.setScale(1.05);
+      hitZone.on('pointerover', () => {
+        if (button.enabled) {
+          hitZone.setScale(1.04);
+          this.redrawMovementPadButton(button, false, true);
+        }
       });
-      buttonContainer.on('pointerout', () => {
-        buttonContainer.setScale(1);
+      hitZone.on('pointerout', () => {
+        hitZone.setScale(1);
+        this.redrawMovementPadButton(button, false, false);
       });
-      buttonContainer.on('pointerdown', () => {
-        if (!button.enabled || !this.boardSceneRef) return;
+      hitZone.on('pointerdown', () => {
+        if (!button.enabled || !this.boardSceneRef) {
+          return;
+        }
         this.boardSceneRef.events.emit('virtual-move', button.direction);
       });
 
-      this.redrawMovementPadButton(button, false);
+      root.add([overlay, hitZone]);
+      this.redrawMovementPadButton(button, false, false);
       buttons.set(spec.direction, button);
-      root.add(buttonContainer);
-    }
+    });
 
     this.movementPad = { container: root, buttons };
   }
 
   private updateMovementPad(validDirections: Direction[]): void {
     const validSet = new Set(validDirections);
-    for (const button of this.movementPad.buttons.values()) {
+    this.movementPad.buttons.forEach((button) => {
       button.enabled = validSet.has(button.direction);
-      this.redrawMovementPadButton(button, false);
-    }
+      this.redrawMovementPadButton(button, false, false);
+    });
   }
 
   private setMovementPadVisible(visible: boolean): void {
     this.movementPad.container.setVisible(visible);
     if (!visible) {
-      for (const button of this.movementPad.buttons.values()) {
+      this.movementPad.buttons.forEach((button) => {
         button.container.setScale(1);
-      }
+      });
     }
   }
 
   private flashMovementPadButton(direction: Direction): void {
     const button = this.movementPad.buttons.get(direction);
-    if (!button || !this.movementPad.container.visible) return;
+    if (!button || !this.movementPad.container.visible) {
+      return;
+    }
 
-    this.redrawMovementPadButton(button, true);
+    this.redrawMovementPadButton(button, true, false);
     button.container.setScale(1);
     this.tweens.killTweensOf(button.container);
     this.tweens.add({
       targets: button.container,
-      scale: 1.13,
-      duration: 90,
+      scale: 1.1,
+      duration: 100,
       yoyo: true,
       ease: 'Sine.Out',
     });
+
     this.time.delayedCall(220, () => {
-      this.redrawMovementPadButton(button, false);
+      this.redrawMovementPadButton(button, false, false);
       button.container.setScale(1);
     });
   }
 
-  private redrawMovementPadButton(button: MovementPadButton, active: boolean): void {
-    const fillColor = active ? 0xf1c40f : (button.enabled ? 0x274e95 : 0x17223a);
-    const borderColor = active ? 0xffffff : (button.enabled ? 0x91b8ff : 0x3f4d6b);
-    const textColor = active ? '#13203d' : (button.enabled ? '#ffffff' : '#7e8bab');
+  private redrawMovementPadButton(button: MovementPadButton, active: boolean, hover: boolean): void {
+    const width = button.container.width;
+    const height = button.container.height;
+    const x = button.container.x;
+    const y = button.container.y;
+    const enabled = button.enabled || active;
 
-    button.background.clear();
-    button.background.fillStyle(fillColor, button.enabled || active ? 0.96 : 0.62);
-    button.background.fillRoundedRect(-23, -23, 46, 46, 8);
-    button.background.lineStyle(active ? 3 : 2, borderColor, 0.95);
-    button.background.strokeRoundedRect(-23, -23, 46, 46, 8);
-    button.label.setColor(textColor);
-    button.container.setAlpha(button.enabled || active ? 1 : 0.48);
+    button.overlay.clear();
+    if (!enabled) {
+      button.overlay.fillStyle(0x081120, 0.46);
+      button.overlay.fillRoundedRect(x - width / 2 + 4, y - height / 2 + 4, width - 8, height - 8, 12);
+      button.overlay.lineStyle(1.5, 0x4c3f33, 0.6);
+      button.overlay.strokeRoundedRect(x - width / 2 + 4, y - height / 2 + 4, width - 8, height - 8, 12);
+      return;
+    }
+
+    if (active) {
+      button.overlay.fillStyle(0xf1d17a, 0.18);
+      button.overlay.fillRoundedRect(x - width / 2 + 4, y - height / 2 + 4, width - 8, height - 8, 12);
+      button.overlay.lineStyle(3, 0xfff0b8, 0.95);
+      button.overlay.strokeRoundedRect(x - width / 2 + 4, y - height / 2 + 4, width - 8, height - 8, 12);
+      return;
+    }
+
+    if (hover) {
+      button.overlay.fillStyle(0xffefb0, 0.1);
+      button.overlay.fillRoundedRect(x - width / 2 + 4, y - height / 2 + 4, width - 8, height - 8, 12);
+      button.overlay.lineStyle(2, 0xf5df9a, 0.9);
+      button.overlay.strokeRoundedRect(x - width / 2 + 4, y - height / 2 + 4, width - 8, height - 8, 12);
+    }
   }
 
   private createStopPhaseButton(): void {
-    const bg = this.add.graphics();
-    bg.fillStyle(0x274e95, 0.95);
-    bg.fillRoundedRect(-75, -22, 150, 44, 10);
-    bg.lineStyle(2, 0x91b8ff, 0.95);
-    bg.strokeRoundedRect(-75, -22, 150, 44, 10);
-
-    const label = this.add.text(0, 0, 'Dung cho', {
-      fontFamily: 'Arial',
-      fontSize: '18px',
-      color: '#ffffff',
-      fontStyle: 'bold',
-    });
-    label.setOrigin(0.5);
-
-    const container = this.add.container(1180, 390, [bg, label]);
-    container.setDepth(130);
-    container.setSize(150, 44);
-    container.setInteractive(
-      new Phaser.Geom.Rectangle(-75, -22, 150, 44),
-      Phaser.Geom.Rectangle.Contains
+    this.stopPhaseButton = this.createActionButton(
+      GAME_UI_LAYOUT.rollButton.centerX,
+      GAME_UI_LAYOUT.rollButton.centerY,
+      Math.round(GAME_UI_LAYOUT.rollButton.width),
+      Math.round(GAME_UI_LAYOUT.rollButton.height),
+      'Dung phase',
+      'ui-button-roll',
+      () => {
+        if (this.boardSceneRef) {
+          this.boardSceneRef.events.emit('card-phase-stop');
+        }
+      },
     );
-
-    container.on('pointerover', () => {
-      container.setScale(1.04);
-    });
-    container.on('pointerout', () => {
-      container.setScale(1);
-    });
-    container.on('pointerdown', () => {
-      if (this.boardSceneRef) {
-        this.boardSceneRef.events.emit('card-phase-stop');
-      }
-    });
-
-    this.stopPhaseButton = { container, label };
     this.setStopPhaseButtonVisible(false);
+  }
+
+  private createWaitButton(): void {
+    this.waitButton = this.createActionButton(
+      GAME_UI_LAYOUT.waitButton.centerX,
+      GAME_UI_LAYOUT.waitButton.centerY,
+      Math.round(GAME_UI_LAYOUT.waitButton.width),
+      Math.round(GAME_UI_LAYOUT.waitButton.height),
+      'Dung cho',
+      'ui-button-skip',
+      () => {
+        if (this.boardSceneRef) {
+          this.boardSceneRef.events.emit('card-phase-stop');
+        }
+      },
+    );
+    this.setWaitButtonVisible(false);
   }
 
   private setStopPhaseButtonVisible(visible: boolean): void {
@@ -883,9 +899,58 @@ export class UIScene extends Phaser.Scene {
     }
   }
 
-  private showRevealPopup(title: string, cardName: string): void {
+  private setWaitButtonVisible(visible: boolean): void {
+    this.waitButton.container.setVisible(visible);
+    if (!visible) {
+      this.waitButton.container.setScale(1);
+    }
+  }
+
+  private createActionButton(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    text: string,
+    textureKey: string,
+    onClick: () => void,
+  ): ActionButton {
+    const halfWidth = width / 2;
+    const halfHeight = height / 2;
+
+    const bg = this.add.image(0, 0, textureKey);
+    bg.setDisplaySize(width, height);
+
+    const label = this.add.text(0, 0, text, {
+      fontFamily: 'Georgia',
+      fontSize: '1px',
+      color: '#fff3cc',
+    });
+    label.setVisible(false);
+
+    const container = this.add.container(x, y, [bg, label]);
+    container.setDepth(130);
+    container.setSize(width, height);
+    container.setInteractive(
+      new Phaser.Geom.Rectangle(-halfWidth, -halfHeight, width, height),
+      Phaser.Geom.Rectangle.Contains,
+    );
+
+    container.on('pointerover', () => {
+      container.setScale(1.04);
+    });
+    container.on('pointerout', () => {
+      container.setScale(1);
+    });
+    container.on('pointerdown', onClick);
+
+    return { container, label };
+  }
+
+  private showRevealPopup(title: string, cardName: string, cardType?: CardType | null): void {
     this.revealPopup.title.setText(title);
     this.revealPopup.cardText.setText(cardName);
+    this.revealPopup.cardImage.setTexture(getCardTextureKey(cardType ?? null));
 
     if (!this.revealVisible) {
       this.revealPopup.container.setVisible(true);
@@ -901,7 +966,9 @@ export class UIScene extends Phaser.Scene {
   }
 
   private hideRevealPopup(): void {
-    if (!this.revealVisible) return;
+    if (!this.revealVisible) {
+      return;
+    }
 
     this.revealVisible = false;
     this.tweens.killTweensOf(this.revealPopup.container);
@@ -913,5 +980,13 @@ export class UIScene extends Phaser.Scene {
         this.revealPopup.container.setVisible(false);
       },
     });
+  }
+
+  private asRecord(input: unknown): Record<string, unknown> | null {
+    if (!input || typeof input !== 'object') {
+      return null;
+    }
+
+    return input as Record<string, unknown>;
   }
 }

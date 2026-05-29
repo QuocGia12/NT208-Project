@@ -6,6 +6,7 @@
     <title>Cuộc Đua 12 Con Giáp - Game UI</title>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@400;700&display=block');
         * {
             margin: 0;
             padding: 0;
@@ -1167,6 +1168,21 @@
                 e.target.nextElementSibling.textContent = e.target.value + '%';
             });
         });
+
+        // Ensure local Playpen Sans font is ready for Phaser
+        (async function() {
+            try {
+                await document.fonts.load('400 15px "Playpen Sans"');
+                await document.fonts.load('700 15px "Playpen Sans"');
+                console.log('Playpen Sans font loaded successfully');
+            } catch (e) {
+                console.warn('Font loading warning:', e);
+            }
+        })();
     </script>
+
+    <!-- Dummy element to render Playpen Sans -->
+    <div style="font-family: 'Playpen Sans', cursive; font-weight: 400; position: absolute; opacity: 0; width: 1px; height: 1px;">.</div>
+    <div style="font-family: 'Playpen Sans', cursive; font-weight: 700; position: absolute; opacity: 0; width: 1px; height: 1px;">.</div>
 </body>
 </html>

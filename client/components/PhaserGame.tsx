@@ -1,22 +1,27 @@
 import React, { useEffect, useRef } from 'react';
-import type * as PhaserNamespace from 'phaser';
 import { SocketClient } from '../lib/SocketClient';
+import type { PreviewPrivateState } from '../phaser/mock/gamePreviewData';
+import type { PublicGameState } from '../types/game';
 
 interface Props {
   roomId: string;
   playerId: string;
+  previewState?: PublicGameState;
+  previewPrivateState?: PreviewPrivateState;
 }
 
 const socketClient = SocketClient.getInstance();
 
-const PhaserGame: React.FC<Props> = ({ roomId, playerId }) => {
+const PhaserGame: React.FC<Props> = ({ roomId, playerId, previewState, previewPrivateState }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let game: PhaserNamespace.Game | null = null;
+    let game: { destroy: (removeCanvas?: boolean) => void } | null = null;
     let cancelled = false;
+    const isPreview = Boolean(previewState && previewPrivateState);
 
     const ensureSocketConnected = async (): Promise<void> => {
+      if (isPreview) return;
       if (socketClient.isConnected()) return;
 
       socketClient.connect();
@@ -73,6 +78,8 @@ const PhaserGame: React.FC<Props> = ({ roomId, playerId }) => {
       game.scene.add('UIScene', UIScene, false);
       game.registry.set('roomId', roomId);
       game.registry.set('playerId', playerId);
+      game.registry.set('previewState', previewState ?? null);
+      game.registry.set('previewPrivateState', previewPrivateState ?? null);
       game.scene.start('PreloadScene');
     };
 
@@ -84,7 +91,7 @@ const PhaserGame: React.FC<Props> = ({ roomId, playerId }) => {
         game.destroy(true);
       }
     };
-  }, [roomId, playerId]);
+  }, [playerId, previewPrivateState, previewState, roomId]);
 
   return (
     <div

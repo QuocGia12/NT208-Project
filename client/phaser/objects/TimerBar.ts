@@ -1,4 +1,5 @@
-﻿import * as Phaser from 'phaser';
+import * as Phaser from 'phaser';
+import { GAME_UI_THEME } from '../layout/gameUITheme';
 
 export class TimerBar {
   private scene: Phaser.Scene;
@@ -29,10 +30,10 @@ export class TimerBar {
     this.background = this.scene.add.graphics();
     this.fill = this.scene.add.graphics();
 
-    this.label = this.scene.add.text(this.x, this.y - 14, '', {
-      fontFamily: 'Arial',
+    this.label = this.scene.add.text(this.x, this.y - 16, '', {
+      fontFamily: 'Georgia',
       fontSize: '16px',
-      color: '#dce7ff',
+      color: '#f4de9a',
       fontStyle: 'bold',
     });
     this.label.setOrigin(0.5, 1);
@@ -42,7 +43,7 @@ export class TimerBar {
     this.fill.setDepth(90);
 
     this.drawBackground();
-    this.drawFill(0, 0x3ac46f);
+    this.drawFill(0, GAME_UI_THEME.success);
   }
 
   showLabel(text: string): void {
@@ -54,7 +55,7 @@ export class TimerBar {
 
     this.expiresAt = expiresAt;
     this.totalDuration = Math.max(1, expiresAt - Date.now());
-    this.drawFill(1, 0x3ac46f);
+    this.drawFill(1, GAME_UI_THEME.success);
   }
 
   update(): void {
@@ -63,15 +64,15 @@ export class TimerBar {
     const remaining = this.expiresAt - Date.now();
     const ratio = Phaser.Math.Clamp(remaining / this.totalDuration, 0, 1);
 
-    let color = 0x3ac46f;
+    let color = GAME_UI_THEME.success;
     if (ratio <= 0.2) {
-      color = 0xe74c3c;
+      color = GAME_UI_THEME.danger;
       this.ensurePulse();
     } else if (ratio <= 0.5) {
-      color = 0xf1c40f;
+      color = GAME_UI_THEME.gold;
       this.stopPulse();
     } else {
-      color = 0x3ac46f;
+      color = GAME_UI_THEME.success;
       this.stopPulse();
     }
 
@@ -85,7 +86,7 @@ export class TimerBar {
   stop(): void {
     this.expiresAt = null;
     this.stopPulse();
-    this.drawFill(0, 0x3ac46f);
+    this.drawFill(0, GAME_UI_THEME.success);
   }
 
   destroy(): void {
@@ -100,10 +101,14 @@ export class TimerBar {
     const top = this.y;
 
     this.background.clear();
-    this.background.fillStyle(0x0d1529, 0.95);
+    this.background.fillStyle(GAME_UI_THEME.woodDark, 0.96);
+    this.background.fillRoundedRect(left - 8, top - 7, this.maxWidth + 16, this.height + 14, 10);
+    this.background.fillStyle(GAME_UI_THEME.panelFill, 0.95);
     this.background.fillRoundedRect(left - 4, top - 4, this.maxWidth + 8, this.height + 8, 8);
-    this.background.lineStyle(1.5, 0x324668, 0.9);
-    this.background.strokeRoundedRect(left - 4, top - 4, this.maxWidth + 8, this.height + 8, 8);
+    this.background.lineStyle(2, GAME_UI_THEME.goldDark, 0.9);
+    this.background.strokeRoundedRect(left - 5, top - 5, this.maxWidth + 10, this.height + 10, 8);
+    this.background.lineStyle(1.2, GAME_UI_THEME.goldSoft, 0.75);
+    this.background.strokeRoundedRect(left - 2, top - 2, this.maxWidth + 4, this.height + 4, 6);
   }
 
   private drawFill(ratio: number, color: number): void {
@@ -116,6 +121,8 @@ export class TimerBar {
 
     this.fill.fillStyle(color, 1);
     this.fill.fillRoundedRect(left, top, width, this.height, 6);
+    this.fill.fillStyle(0xffffff, 0.15);
+    this.fill.fillRoundedRect(left + 4, top + 1, Math.max(0, width - 8), Math.max(0, this.height / 2 - 1), 4);
   }
 
   private ensurePulse(): void {

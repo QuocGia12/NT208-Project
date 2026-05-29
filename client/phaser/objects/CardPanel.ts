@@ -1,51 +1,36 @@
-﻿import * as Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { CardState } from '../../types/game';
+import { getCardTextureKey } from '../assets/gameUIAssets';
+
+const FIGMA_SLOT_OFFSETS = [-233, -140, -47, 47, 140, 233];
+const FIGMA_SLOT_ROTATIONS = [-0.055, -0.03, -0.012, 0.012, 0.03, 0.055];
+const FIGMA_SLOT_Y = [2, 0, -2, -2, 0, 2];
 
 export class CardPanel {
   private scene: Phaser.Scene;
   private x: number;
   private y: number;
-  private width: number;
 
   private root: Phaser.GameObjects.Container;
   private cardsRoot: Phaser.GameObjects.Container;
-  private titleText: Phaser.GameObjects.Text;
   private emptyText: Phaser.GameObjects.Text;
-
   private onCardClickCallback: ((cardId: string) => void) | null;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, width: number = 860) {
+  constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
     this.x = x;
     this.y = y;
-    this.width = width;
-
     this.onCardClickCallback = null;
 
-    const background = this.scene.add.graphics();
-    background.fillStyle(0x101a30, 0.92);
-    background.fillRoundedRect(-this.width / 2, -44, this.width, 88, 12);
-    background.lineStyle(2, 0x2f477a, 0.88);
-    background.strokeRoundedRect(-this.width / 2, -44, this.width, 88, 12);
-
-    this.titleText = this.scene.add.text(-this.width / 2 + 10, -58, 'Tháº» bÃ i cá»§a báº¡n', {
-      fontFamily: 'Arial',
-      fontSize: '14px',
-      color: '#cfdcff',
-      fontStyle: 'bold',
-    });
-    this.titleText.setOrigin(0, 0.5);
-
-    this.emptyText = this.scene.add.text(0, 0, 'KhÃ´ng cÃ³ bÃ i', {
-      fontFamily: 'Arial',
-      fontSize: '15px',
-      color: '#9ab0dc',
+    this.emptyText = this.scene.add.text(0, 0, 'Khong co bai', {
+      fontFamily: '"Playpen Sans", cursive',
+      fontSize: '18px',
+      color: '#f6d89e',
     });
     this.emptyText.setOrigin(0.5);
 
     this.cardsRoot = this.scene.add.container(0, 0);
-
-    this.root = this.scene.add.container(this.x, this.y, [background, this.titleText, this.cardsRoot, this.emptyText]);
+    this.root = this.scene.add.container(this.x, this.y, [this.cardsRoot, this.emptyText]);
     this.root.setDepth(120);
   }
 
@@ -62,57 +47,34 @@ export class CardPanel {
     }
 
     this.emptyText.setVisible(false);
-
     const playableSet = new Set(playableCardIds);
     const helperHighlightSet = new Set(helperHighlightCardIds);
     const hasHelperFocus = helperHighlightSet.size > 0;
-    const cardWidth = 120;
-    const cardHeight = 60;
-    const gap = 12;
-
-    const totalWidth = hand.length * cardWidth + (hand.length - 1) * gap;
-    const startX = -totalWidth / 2 + cardWidth / 2;
+    const cardWidth = 96;
+    const cardHeight = 142;
 
     hand.forEach((card, index) => {
+      const texture = getCardTextureKey(card.type);
       const isPlayable = playableSet.has(card.id);
       const isHelperHighlighted = helperHighlightSet.has(card.id);
-      const cardX = startX + index * (cardWidth + gap);
+      const slot = this.getSlotTransform(index, hand.length);
 
-      const cardContainer = this.scene.add.container(cardX, 0);
+      const image = this.scene.add.image(0, 0, texture);
+      image.setDisplaySize(cardWidth, cardHeight);
+
+      const glow = this.scene.add.rectangle(0, 0, cardWidth - 8, cardHeight - 8, 0xf8e08c, 0);
+      glow.setStrokeStyle(
+        isHelperHighlighted ? 4 : 2,
+        isHelperHighlighted ? 0x74f7ff : 0xf8e08c,
+        isPlayable ? 0.96 : 0.25,
+      );
+
+      const cardContainer = this.scene.add.container(slot.x, slot.y, [image, glow]);
       cardContainer.setDepth(121);
-
-      const cardGraphic = this.scene.add.graphics();
-      const fillColor = isHelperHighlighted
-        ? 0x1f3f5d
-        : isPlayable
-          ? 0x273b6a
-          : 0x1a243c;
-      const borderColor = isHelperHighlighted
-        ? 0x58d6ff
-        : isPlayable
-          ? 0xf1c40f
-          : 0x4f5f82;
-      const borderWidth = isHelperHighlighted ? 3.5 : (isPlayable ? 3 : 1.5);
-      const fillAlpha = isHelperHighlighted ? 0.96 : (isPlayable ? 0.96 : 0.78);
-
-      cardGraphic.fillStyle(fillColor, fillAlpha);
-      cardGraphic.fillRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 10);
-      cardGraphic.lineStyle(borderWidth, borderColor, 0.95);
-      cardGraphic.strokeRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, 10);
-
-      const label = this.scene.add.text(0, 0, card.displayName, {
-        fontFamily: 'Arial',
-        fontSize: '14px',
-        color: '#f0f4ff',
-        align: 'center',
-        wordWrap: { width: cardWidth - 16, useAdvancedWrap: true },
-      });
-      label.setOrigin(0.5);
-
-      cardContainer.add([cardGraphic, label]);
+      cardContainer.setRotation(slot.rotation);
 
       if (!isPlayable) {
-        cardContainer.setAlpha(0.55);
+        cardContainer.setAlpha(0.42);
       } else {
         if (hasHelperFocus && !isHelperHighlighted) {
           cardContainer.setAlpha(0.58);
@@ -121,14 +83,15 @@ export class CardPanel {
         cardContainer.setSize(cardWidth, cardHeight);
         cardContainer.setInteractive(
           new Phaser.Geom.Rectangle(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight),
-          Phaser.Geom.Rectangle.Contains
+          Phaser.Geom.Rectangle.Contains,
         );
-
         cardContainer.on('pointerover', () => {
           cardContainer.setScale(1.04);
+          cardContainer.y = slot.y - 10;
         });
         cardContainer.on('pointerout', () => {
           cardContainer.setScale(1);
+          cardContainer.y = slot.y;
         });
         cardContainer.on('pointerdown', () => {
           this.handleCardClick(card.id);
@@ -154,5 +117,25 @@ export class CardPanel {
 
     const boardScene = this.scene.scene.get('BoardScene');
     boardScene.events.emit('card-clicked', cardId);
+  }
+
+  private getSlotTransform(index: number, count: number): { x: number; y: number; rotation: number } {
+    if (count <= FIGMA_SLOT_OFFSETS.length) {
+      const offset = Math.floor((FIGMA_SLOT_OFFSETS.length - count) / 2);
+      const slotIndex = offset + index;
+      return {
+        x: FIGMA_SLOT_OFFSETS[slotIndex],
+        y: FIGMA_SLOT_Y[slotIndex],
+        rotation: FIGMA_SLOT_ROTATIONS[slotIndex],
+      };
+    }
+
+    const spacing = 88;
+    const startX = -((count - 1) * spacing) / 2;
+    return {
+      x: startX + index * spacing,
+      y: 0,
+      rotation: (index - (count - 1) / 2) * 0.018,
+    };
   }
 }

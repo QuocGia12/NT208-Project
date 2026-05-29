@@ -1,4 +1,5 @@
-﻿import * as Phaser from 'phaser';
+import * as Phaser from 'phaser';
+import { preloadGameUIAssets } from '../assets/gameUIAssets';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -6,10 +7,13 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // No external assets. All visuals are procedural Graphics.
+    preloadGameUIAssets(this);
   }
 
   create(): void {
-    this.scene.start('BoardScene');
+    // Delay to ensure fonts are ready
+    this.time.delayedCall(200, () => {
+      this.scene.start('BoardScene');
+    });
   }
 }

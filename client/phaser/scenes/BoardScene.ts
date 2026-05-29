@@ -1,4 +1,4 @@
-﻿import * as Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { SocketClient } from '../../lib/SocketClient';
 import {
   CardState,
@@ -15,9 +15,13 @@ import {
 } from '../../types/game';
 import { BoardRenderer } from '../objects/BoardRenderer';
 import { PlayerSprite } from '../objects/PlayerSprite';
+import { GAME_UI_LAYOUT } from '../layout/gameUILayout';
+import type { PreviewPrivateState } from '../mock/gamePreviewData';
 
 export class BoardScene extends Phaser.Scene {
   private boardRenderer!: BoardRenderer;
+  private backgroundImage!: Phaser.GameObjects.Image;
+  private boardTableBackground!: Phaser.GameObjects.Graphics;
   private playerSprites: Map<string, PlayerSprite> = new Map();
   private socketClient!: SocketClient;
   private localPlayerId = '';
@@ -34,6 +38,7 @@ export class BoardScene extends Phaser.Scene {
   private pendingTargetCardId: string | null = null;
   private pendingChangeTeammateCardId: string | null = null;
   private helperHighlightCardIds: string[] = [];
+  private isPreviewMode = false;
 
   private readonly onStateUpdateHandler = (payload: any): void => this.onStateUpdate(payload);
   private readonly onPrivateUpdateHandler = (payload: any): void => this.onPrivateUpdate(payload);
@@ -50,16 +55,28 @@ export class BoardScene extends Phaser.Scene {
   }
 
   create(): void {
+    const previewState = this.game.registry.get('previewState') as PublicGameState | null;
+    const previewPrivateState = this.game.registry.get('previewPrivateState') as PreviewPrivateState | null;
+
     this.socketClient = SocketClient.getInstance();
     this.roomId = String(this.game.registry.get('roomId') ?? '');
     this.localPlayerId = String(this.game.registry.get('playerId') ?? this.socketClient.myPlayerId ?? '');
     this.socketClient.myRoomId = this.roomId;
+
+    this.backgroundImage = this.add.image(640, 360, 'ui-background-main');
+    this.backgroundImage.setDisplaySize(1280, 720);
+    this.backgroundImage.setDepth(-20);
+
+    this.boardTableBackground = this.add.graphics();
+    this.boardTableBackground.setDepth(-5);
+    this.drawBoardTableBackground();
+
     this.boardRenderer = new BoardRenderer(this);
+    this.isPreviewMode = Boolean(previewState && previewPrivateState);
 
     this.tetherGraphics = this.add.graphics();
     this.tetherGraphics.setDepth(15);
 
-    this.registerSocketEvents();
     this.setupInput();
 
     this.events.on('card-clicked', this.onCardClicked, this);
@@ -70,7 +87,13 @@ export class BoardScene extends Phaser.Scene {
       this.scene.launch('UIScene');
     }
 
-    if (this.roomId) {
+    if (this.isPreviewMode && previewState && previewPrivateState) {
+      this.applyPreviewData(previewState, previewPrivateState);
+    } else {
+      this.registerSocketEvents();
+    }
+
+    if (!this.isPreviewMode && this.roomId) {
       this.socketClient.requestState(this.roomId);
     }
 
@@ -98,24 +121,24 @@ export class BoardScene extends Phaser.Scene {
       if (!sprite1 || !sprite2 || !p1State || !p2State) continue;
       if (!p1State.hasSpawned || !p2State.hasSpawned) continue;
 
-      // TÃ­nh khoáº£ng cÃ¡ch trÃªn board Ä‘á»ƒ Ä‘á»•i mÃ u
+      // Tính khoảng cách trên board để đổi màu
       const dist = this.calculateTetherDistance(p1State.position, p2State.position);
 
       const tetherLimit = team.tetherLength;
 
-      // MÃ u máº·c Ä‘á»‹nh: tráº¯ng (ráº¥t an toÃ n)
-      // VÃ ng (gáº§n tá»›i giá»›i háº¡n - 2 Ã´)
-      // Äá» (báº±ng giá»›i háº¡n)
+      // Màu mặc định: trắng (rất an toàn)
+      // Vàng (gần tới giới hạn - 2 ô)
+      // Đỏ (bằng giới hạn)
       let lineColor = 0xffffff;
       if (dist >= tetherLimit) {
-        lineColor = 0xff4444; // Äá»
+        lineColor = 0xff4444; // Đỏ
       } else if (dist >= Math.max(1, tetherLimit - 2)) {
-        lineColor = 0xffd700; // VÃ ng
+        lineColor = 0xffd700; // Vàng
       }
 
       this.tetherGraphics.lineStyle(4, lineColor, 0.7);
       
-      // Váº½ nÃ©t Ä‘á»©t Ä‘á»ƒ trÃ´ng Ä‘áº¹p hÆ¡n
+      // Vẽ nét đứt để trông đẹp hơn
       const p1x = sprite1.container.x;
       const p1y = sprite1.container.y;
       const p2x = sprite2.container.x;
@@ -154,15 +177,17 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private cleanup(): void {
-    this.socketClient.off('game:state_update', this.onStateUpdateHandler);
-    this.socketClient.off('game:private_update', this.onPrivateUpdateHandler);
-    this.socketClient.off('game:card_public_reveal', this.onPublicRevealHandler);
-    this.socketClient.off('game:card_reveal_ended', this.onRevealEndedHandler);
-    this.socketClient.off('game:player_respawn', this.onPlayerRespawnHandler);
-    this.socketClient.off('game:over', this.onGameOverHandler);
-    this.socketClient.off('game:error', this.onGameErrorHandler);
-    this.socketClient.off('game:discard_required', this.onDiscardRequiredHandler);
-    this.socketClient.off('game:discard_resolved', this.onDiscardResolvedHandler);
+    if (!this.isPreviewMode) {
+      this.socketClient.off('game:state_update', this.onStateUpdateHandler);
+      this.socketClient.off('game:private_update', this.onPrivateUpdateHandler);
+      this.socketClient.off('game:card_public_reveal', this.onPublicRevealHandler);
+      this.socketClient.off('game:card_reveal_ended', this.onRevealEndedHandler);
+      this.socketClient.off('game:player_respawn', this.onPlayerRespawnHandler);
+      this.socketClient.off('game:over', this.onGameOverHandler);
+      this.socketClient.off('game:error', this.onGameErrorHandler);
+      this.socketClient.off('game:discard_required', this.onDiscardRequiredHandler);
+      this.socketClient.off('game:discard_resolved', this.onDiscardResolvedHandler);
+    }
 
     this.input.keyboard?.off('keydown', this.onKeyboardInput, this);
     this.input.off('pointerdown', this.onBoardClick, this);
@@ -171,6 +196,7 @@ export class BoardScene extends Phaser.Scene {
     this.events.off('virtual-move', this.onVirtualMove, this);
 
     this.boardRenderer.clearHighlights();
+    this.boardTableBackground.destroy();
 
     for (const sprite of this.playerSprites.values()) {
       sprite.destroy();
@@ -184,6 +210,7 @@ export class BoardScene extends Phaser.Scene {
 
     const firstRender = !this.currentState;
     this.currentState = state as PublicGameState;
+    this.registry.set('activeZodiacs', this.currentState.board.activeZodiacs);
 
     if (firstRender) {
       this.boardRenderer.init(this.currentState.board, this.currentState.players);
@@ -245,7 +272,7 @@ export class BoardScene extends Phaser.Scene {
 
   private onPlayerRespawn(payload: any): void {
     const data = payload?.data ?? payload;
-    // Test 7: Respawn, not elimination â€” emit for UIScene banner
+    // Test 7: Respawn, not elimination — emit for UIScene banner
     this.events.emit('player-eliminated', data);
   }
 
@@ -283,7 +310,7 @@ export class BoardScene extends Phaser.Scene {
       this.setHelperCardHighlights(helperCardIds);
       this.events.emit('game-error', {
         ...error,
-        message: error?.message ?? 'Chá»n thÃªm 1 lÃ¡ di chuyá»ƒn Ä‘á»ƒ dÃ¹ng cÃ¹ng Äá»•i vá»‹ trÃ­ Ä‘á»“ng Ä‘á»™i.',
+        message: error?.message ?? 'Chọn thêm 1 lá di chuyển để dùng cùng Đổi vị trí đồng đội.',
       });
       return;
     }
@@ -422,10 +449,12 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private onVirtualMove(direction: Direction): void {
+    if (this.isPreviewMode) return;
     this.trySendMove(direction);
   }
 
   private trySendMove(direction: Direction): boolean {
+    if (this.isPreviewMode) return false;
     if (!this.currentState) return false;
     if (!this.isMyTurn(this.currentState)) return false;
 
@@ -444,6 +473,7 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private onCardClicked(cardId: string): void {
+    if (this.isPreviewMode) return;
     if (!this.currentState) return;
     if (!this.isMyTurn(this.currentState)) return;
     if (this.currentState.currentPhase !== Phase.PLAY_CARD) return;
@@ -459,13 +489,13 @@ export class BoardScene extends Phaser.Scene {
         this.pendingChangeTeammateCardId = null;
         this.pendingTargetCardId = null;
         this.clearHelperCardHighlights();
-        this.events.emit('game-error', { message: 'ÄÃ£ há»§y chá»n Äá»•i vá»‹ trÃ­ Ä‘á»“ng Ä‘á»™i.' });
+        this.events.emit('game-error', { message: 'Đã hủy chọn Đổi vị trí đồng đội.' });
         return;
       }
 
       if (!this.isMovementCard(card.type)) {
         this.events.emit('game-error', {
-          message: 'HÃ£y chá»n 1 lÃ¡ di chuyá»ƒn há»£p lá»‡ Ä‘á»ƒ káº¿t há»£p vá»›i Äá»•i vá»‹ trÃ­ Ä‘á»“ng Ä‘á»™i.',
+          message: 'Hãy chọn 1 lá di chuyển hợp lệ để kết hợp với Đổi vị trí đồng đội.',
         });
         return;
       }
@@ -500,7 +530,7 @@ export class BoardScene extends Phaser.Scene {
       this.setHelperCardHighlights([]);
       this.socketClient.sendPlayCard(cardId);
       this.events.emit('game-error', {
-        message: 'Äang láº¥y danh sÃ¡ch lÃ¡ di chuyá»ƒn há»£p lá»‡...',
+        message: 'Đang lấy danh sách lá di chuyển hợp lệ...',
       });
       return;
     }
@@ -509,6 +539,7 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private onCardPhaseStop(): void {
+    if (this.isPreviewMode) return;
     if (!this.currentState) return;
     if (!this.isMyTurn(this.currentState)) return;
     if (this.currentState.currentPhase !== Phase.PLAY_CARD) return;
@@ -565,6 +596,16 @@ export class BoardScene extends Phaser.Scene {
     this.selectedHelperCardId = null;
     this.clearHelperCardHighlights();
     this.exitTargetSelectionMode();
+  }
+
+  private applyPreviewData(state: PublicGameState, privateState: PreviewPrivateState): void {
+    this.localPlayerId = privateState.playerId;
+    this.socketClient.myPlayerId = privateState.playerId;
+
+    this.time.delayedCall(0, () => {
+      this.onStateUpdate({ state });
+      this.onPrivateUpdate(privateState);
+    });
   }
 
   private exitTargetSelectionMode(): void {
@@ -641,6 +682,20 @@ export class BoardScene extends Phaser.Scene {
   private toRecord(input: unknown): Record<string, unknown> | null {
     if (!input || typeof input !== 'object') return null;
     return input as Record<string, unknown>;
+  }
+
+  private drawBoardTableBackground(): void {
+    const { x, y, width, height } = GAME_UI_LAYOUT.boardTable;
+
+    this.boardTableBackground.clear();
+    this.boardTableBackground.fillStyle(0x432718, 0.9);
+    this.boardTableBackground.fillRoundedRect(x, y, width, height, 5);
+    this.boardTableBackground.fillStyle(0x1a2030, 0.92);
+    this.boardTableBackground.fillRoundedRect(x + 12, y + 12, width - 24, height - 24, 2);
+    this.boardTableBackground.lineStyle(2, 0x7b5b34, 0.75);
+    this.boardTableBackground.strokeRoundedRect(x + 2, y + 2, width - 4, height - 4, 5);
+    this.boardTableBackground.lineStyle(1.5, 0x8fa7c0, 0.22);
+    this.boardTableBackground.strokeRoundedRect(x + 14, y + 14, width - 28, height - 28, 2);
   }
 }
 
