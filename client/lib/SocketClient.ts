@@ -5,6 +5,8 @@ import type { Socket } from 'socket.io-client';
 import { gameSocketClient } from '@/lib/game-socket-client';
 import type { Direction, Position } from '@/types/game';
 
+type SocketCallback = (...args: unknown[]) => void;
+
 export class SocketClient {
   private static instance: SocketClient;
   private explicitRoomId = '';
@@ -103,14 +105,14 @@ export class SocketClient {
     this.ensureSocket().emit('debug:fill_room');
   }
 
-  on(event: string, callback: Function): void {
-    this.ensureSocket().on(event, callback as (...args: unknown[]) => void);
+  on(event: string, callback: SocketCallback): void {
+    this.ensureSocket().on(event, callback);
   }
 
-  off(event: string, callback?: Function): void {
+  off(event: string, callback?: SocketCallback): void {
     const socket = gameSocketClient.getSocket();
     if (callback) {
-      socket.off(event, callback as (...args: unknown[]) => void);
+      socket.off(event, callback);
       return;
     }
 

@@ -4,11 +4,25 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import PhaserGame from '@/components/PhaserGame';
-import { type GameMatchFound, gameSocketClient } from '@/lib/game-socket-client';
+import {
+  type GameMatchFound,
+  type GameSocketError,
+  gameSocketClient
+} from '@/lib/game-socket-client';
 import { useAuthStore } from '@/store/auth-store';
 
 type PhaserRoomShellProps = {
   roomId: string;
+};
+
+type WrappedPayload<T> = T | { data: T };
+
+const unwrapPayload = <T,>(payload: WrappedPayload<T>): T => {
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return payload.data;
+  }
+
+  return payload;
 };
 
 export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
@@ -48,13 +62,13 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
       setStatus('Disconnected. Reconnecting...');
     };
 
-    const handleGameError = (payload: any) => {
-      const data = payload?.data ?? payload;
+    const handleGameError = (payload: WrappedPayload<GameSocketError>) => {
+      const data = unwrapPayload(payload);
       setStatus(data?.message ?? 'Game server returned an error.');
     };
 
-    const handleMatchFound = (payload: any) => {
-      const match = payload?.data ?? payload;
+    const handleMatchFound = (payload: WrappedPayload<GameMatchFound>) => {
+      const match = unwrapPayload(payload);
       if (match?.roomId === normalizedRoomId) {
         gameSocketClient.rememberMatch(match);
         setRouteMatch(match);

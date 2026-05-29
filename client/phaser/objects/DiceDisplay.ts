@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+﻿import * as Phaser from 'phaser';
 
 export class DiceDisplay {
   private scene: Phaser.Scene;
@@ -23,7 +23,7 @@ export class DiceDisplay {
     panel.lineStyle(2, 0x2f477a, 0.9);
     panel.strokeRoundedRect(-78, -92, 156, 184, 12);
 
-    this.titleText = this.scene.add.text(0, -72, 'Xúc xắc', {
+    this.titleText = this.scene.add.text(0, -72, 'XÃºc xáº¯c', {
       fontFamily: 'Arial',
       fontSize: '18px',
       color: '#d8e4ff',

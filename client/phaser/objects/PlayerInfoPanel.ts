@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+﻿import * as Phaser from 'phaser';
 import { PublicPlayerState, TeamInfo } from '../../types/game';
 import { BoardRenderer } from './BoardRenderer';
 
@@ -148,25 +148,25 @@ export class PlayerInfoPanel {
       const teamLabel = player.teamId === 'team1' ? '[T1]' : '[T2]';
       entry.turnMarker.setText(isCurrentTurn ? `${teamLabel} >` : teamLabel);
       entry.nameText.setText(player.name);
-      entry.zodiacText.setText(`Con giáp: ${player.zodiac}`);
+      entry.zodiacText.setText(`Con giÃ¡p: ${player.zodiac}`);
       // Test 7: Progress out of 5 per player
-      entry.progressText.setText(`Tiến độ: ${this.buildProgress(player.claimedCount)} (${player.claimedCount}/5)`);
+      entry.progressText.setText(`Tiáº¿n Ä‘á»™: ${this.buildProgress(player.claimedCount)} (${player.claimedCount}/5)`);
       // Test 7: Show tether length
       const team = teams.find(t => t.teamId === player.teamId);
-      const tetherStr = team ? `Dây: ${team.tetherLength} | Team: ${team.totalClaimed}/10` : '';
-      entry.handText.setText(`Thẻ bài: x${player.handSize}  ${tetherStr}`);
+      const tetherStr = team ? `DÃ¢y: ${team.tetherLength} | Team: ${team.totalClaimed}/10` : '';
+      entry.handText.setText(`Tháº» bÃ i: x${player.handSize}  ${tetherStr}`);
 
       const isLocked = Boolean(player.isLocked || player.skipNextTurn);
       if (isLocked) {
-        entry.statusText.setText('Bị khóa: bỏ lượt tiếp theo');
+        entry.statusText.setText('Bá»‹ khÃ³a: bá» lÆ°á»£t tiáº¿p theo');
         entry.statusText.setColor('#ffd36d');
       } else {
-        entry.statusText.setText('Đang chơi');
+        entry.statusText.setText('Äang chÆ¡i');
         entry.statusText.setColor('#9fc1ff');
       }
 
       if (!player.connected) {
-        entry.warningText.setText('! Mất kết nối');
+        entry.warningText.setText('! Máº¥t káº¿t ná»‘i');
       } else {
         entry.warningText.setText('');
       }

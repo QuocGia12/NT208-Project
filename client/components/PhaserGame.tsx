@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import type * as PhaserNamespace from 'phaser';
 import { SocketClient } from '../lib/SocketClient';
 
 interface Props {
@@ -12,7 +13,7 @@ const PhaserGame: React.FC<Props> = ({ roomId, playerId }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let game: any = null;
+    let game: PhaserNamespace.Game | null = null;
     let cancelled = false;
 
     const ensureSocketConnected = async (): Promise<void> => {
@@ -45,8 +46,7 @@ const PhaserGame: React.FC<Props> = ({ roomId, playerId }) => {
       await ensureSocketConnected();
       if (cancelled) return;
 
-      const PhaserModule = await import('phaser');
-      const Phaser = PhaserModule.default;
+      const Phaser = await import('phaser');
 
       const [{ PreloadScene }, { BoardScene }, { UIScene }] = await Promise.all([
         import('../phaser/scenes/PreloadScene'),

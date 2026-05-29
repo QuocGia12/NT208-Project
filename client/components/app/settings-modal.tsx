@@ -20,34 +20,11 @@ type SettingsModalProps = {
   onClose: () => void;
 };
 
-type SettingsTab = 'audio' | 'graphics' | 'account';
+type SettingsTab = 'audio' | 'account';
 
 const CloseIcon = () => (
   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-  </svg>
-);
-
-const AudioIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-    <path d="M15.5 8.5C16.7 9.7 17.5 11.3 17.5 12.5C17.5 13.7 16.7 15.3 15.5 16.5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
-    <path d="M19 5C21.2 7.2 22.5 9.5 22.5 12C22.5 14.5 21.2 16.8 19 19" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
-  </svg>
-);
-
-const MonitorIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M8 21H16" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
-    <path d="M12 17V21" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
-  </svg>
-);
-
-const UserIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="8" r="3.3" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M5.5 19.2C6.6 16.4 8.9 15 12 15C15.1 15 17.4 16.4 18.5 19.2" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
   </svg>
 );
 
@@ -58,12 +35,6 @@ const LogoutIcon = () => (
     <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
   </svg>
 );
-
-const tabs: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
-  { key: 'audio', label: 'Audio', icon: <AudioIcon /> },
-  { key: 'graphics', label: 'Graphics', icon: <MonitorIcon /> },
-  { key: 'account', label: 'Account', icon: <UserIcon /> }
-];
 
 function VolumeSlider({
   label,
@@ -91,37 +62,6 @@ function VolumeSlider({
         type="range"
         value={value}
       />
-    </div>
-  );
-}
-
-function ToggleSwitch({
-  label,
-  description,
-  checked,
-  onToggle
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">
-          {label}
-        </p>
-        <p className="mt-0.5 text-[0.68rem] text-slate-500">{description}</p>
-      </div>
-      <button
-        aria-label={`Toggle ${label}`}
-        className={`settings-toggle ${checked ? 'settings-toggle-active' : ''}`}
-        onClick={onToggle}
-        type="button"
-      >
-        <div className="settings-toggle-knob" />
-      </button>
     </div>
   );
 }

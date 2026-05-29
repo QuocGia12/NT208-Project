@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+﻿import * as Phaser from 'phaser';
 import {
   ALL_ZODIACS,
   BoardState,
@@ -177,7 +177,7 @@ export class BoardRenderer {
       labelText = '';
       labelColor = '#4a5369';
     } else if (cell.type === CellType.BLANK) {
-      // Test 7: Blank cell — pure white for highest visibility
+      // Test 7: Blank cell â€” pure white for highest visibility
       fill = 0xffffff;
       labelText = '';
       labelColor = '#000000';

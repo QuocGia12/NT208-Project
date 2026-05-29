@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+﻿import * as Phaser from 'phaser';
 import { SocketClient } from '../../lib/SocketClient';
 import {
   CardState,
@@ -230,9 +230,9 @@ export class UIScene extends Phaser.Scene {
   }
 
   private onCardPublicReveal(data: any): void {
-    const playerName = typeof data?.playerName === 'string' ? data.playerName : 'Người chơi';
-    const cardName = typeof data?.card?.displayName === 'string' ? data.card.displayName : 'Thẻ bí ẩn';
-    this.showRevealPopup(`${playerName} rút được:`, cardName);
+    const playerName = typeof data?.playerName === 'string' ? data.playerName : 'NgÆ°á»i chÆ¡i';
+    const cardName = typeof data?.card?.displayName === 'string' ? data.card.displayName : 'Tháº» bÃ­ áº©n';
+    this.showRevealPopup(`${playerName} rÃºt Ä‘Æ°á»£c:`, cardName);
   }
 
   private onCardRevealEnded(): void {
@@ -240,11 +240,11 @@ export class UIScene extends Phaser.Scene {
   }
 
   private onPlayerEliminated(data: any): void {
-    const playerName = typeof data?.playerName === 'string' ? data.playerName : 'Người chơi';
+    const playerName = typeof data?.playerName === 'string' ? data.playerName : 'NgÆ°á»i chÆ¡i';
 
     // Test 7: respawn banner instead of elimination
     const cellsLost = typeof data?.cellsLost === 'number' ? data.cellsLost : 0;
-    this.eliminationBanner.text.setText(`${playerName} bị kẹt! Mất ${cellsLost} ô, hồi sinh!`);
+    this.eliminationBanner.text.setText(`${playerName} bá»‹ káº¹t! Máº¥t ${cellsLost} Ã´, há»“i sinh!`);
     this.eliminationBanner.container.setVisible(true);
     this.eliminationBanner.container.alpha = 0;
 
@@ -281,7 +281,7 @@ export class UIScene extends Phaser.Scene {
       ? data.winner.playerNames.join(' & ')
       : 'Unknown';
     const teamId = data?.winner?.teamId ?? '';
-    this.gameOverOverlay.title.setText(`Team thắng: ${teamId}\n${winnerNames}`);
+    this.gameOverOverlay.title.setText(`Team tháº¯ng: ${teamId}\n${winnerNames}`);
     this.setStopPhaseButtonVisible(false);
     this.setMovementPadVisible(false);
 
@@ -293,7 +293,7 @@ export class UIScene extends Phaser.Scene {
         .sort((a, b) => a.turnIndex - b.turnIndex)
         .forEach(player => {
           const teamLabel = player.teamId === 'team1' ? '[T1]' : '[T2]';
-          statsLines.push(`${teamLabel} ${player.name}: ${player.claimedCount}/5 ô`);
+          statsLines.push(`${teamLabel} ${player.name}: ${player.claimedCount}/5 Ã´`);
         });
     }
 
@@ -325,7 +325,7 @@ export class UIScene extends Phaser.Scene {
 
     if (state.currentPhase === Phase.PICK_SPAWN) {
       this.timerBar.stop();
-      this.timerBar.showLabel(isMyTurn ? 'Chọn ô xuất phát...' : 'Người khác đang chọn ô xuất phát');
+      this.timerBar.showLabel(isMyTurn ? 'Chá»n Ã´ xuáº¥t phÃ¡t...' : 'NgÆ°á»i khÃ¡c Ä‘ang chá»n Ã´ xuáº¥t phÃ¡t');
       this.diceDisplay.hide();
       this.setStopPhaseButtonVisible(false);
       this.setMovementPadVisible(false);
@@ -334,7 +334,7 @@ export class UIScene extends Phaser.Scene {
 
     if (state.currentPhase === Phase.DRAW_CARD) {
       this.timerBar.stop();
-      this.timerBar.showLabel('Rút bài...');
+      this.timerBar.showLabel('RÃºt bÃ i...');
       this.diceDisplay.hide();
       this.rollingShown = false;
       this.setStopPhaseButtonVisible(false);
@@ -347,14 +347,14 @@ export class UIScene extends Phaser.Scene {
       this.timerBar.stop();
 
       if (phase1.diceResult === null) {
-        this.timerBar.showLabel('Đang đổ xúc xắc...');
+        this.timerBar.showLabel('Äang Ä‘á»• xÃºc xáº¯c...');
         if (!this.rollingShown) {
           const duration = Math.max(200, phase1.rollEndAt - Date.now());
           this.diceDisplay.rollAnimation(duration);
           this.rollingShown = true;
         }
       } else {
-        this.timerBar.showLabel(`Xúc xắc: ${phase1.diceResult}`);
+        this.timerBar.showLabel(`XÃºc xáº¯c: ${phase1.diceResult}`);
         this.diceDisplay.showResult(phase1.diceResult);
         this.rollingShown = false;
       }
@@ -366,7 +366,7 @@ export class UIScene extends Phaser.Scene {
     if (state.currentPhase === Phase.MOVE && state.phaseContext.phase === 3) {
       const phase2 = state.phaseContext as Phase2Context;
       this.timerBar.stop();
-      this.timerBar.showLabel(`Di chuyển: ${phase2.stepsRemaining} bước`);
+      this.timerBar.showLabel(`Di chuyá»ƒn: ${phase2.stepsRemaining} bÆ°á»›c`);
       this.diceDisplay.showResult(phase2.diceResult);
       this.rollingShown = false;
       this.setStopPhaseButtonVisible(false);
@@ -382,7 +382,7 @@ export class UIScene extends Phaser.Scene {
       && (state.phaseContext.phase === 2 || state.phaseContext.phase === 4)
     ) {
       const phase3 = state.phaseContext as Phase3Context;
-      const phaseLabel = phase3.phase === 2 ? 'Phase 2: Dùng bài (60s)' : 'Phase 4: Dùng bài (60s)';
+      const phaseLabel = phase3.phase === 2 ? 'Phase 2: DÃ¹ng bÃ i (60s)' : 'Phase 4: DÃ¹ng bÃ i (60s)';
       this.timerBar.showLabel(phaseLabel);
       this.timerBar.startCountdown(phase3.timerExpiresAt);
       this.rollingShown = false;
@@ -404,8 +404,8 @@ export class UIScene extends Phaser.Scene {
     }
 
     const player = state.players.find(p => p.id === state.publicReveal?.playerId);
-    const playerName = player?.name ?? 'Người chơi';
-    this.showRevealPopup(`${playerName} rút được:`, state.publicReveal.card.displayName);
+    const playerName = player?.name ?? 'NgÆ°á»i chÆ¡i';
+    this.showRevealPopup(`${playerName} rÃºt Ä‘Æ°á»£c:`, state.publicReveal.card.displayName);
   }
 
   private createLayoutPanels(): void {
@@ -596,7 +596,7 @@ export class UIScene extends Phaser.Scene {
     confirmBg.lineStyle(2, 0x8eb6ff, 0.95);
     confirmBg.strokeRoundedRect(-90, -22, 180, 44, 10);
 
-    const confirmLabel = this.add.text(0, 0, 'Xác nhận', {
+    const confirmLabel = this.add.text(0, 0, 'XÃ¡c nháº­n', {
       fontFamily: 'Arial',
       fontSize: '20px',
       color: '#ffffff',
@@ -698,18 +698,18 @@ export class UIScene extends Phaser.Scene {
     });
 
     const selectedCount = this.discardSelected.size;
-    this.discardOverlay.instruction.setText(`Chọn ${this.discardRequiredCount} lá bài để bỏ (${selectedCount}/${this.discardRequiredCount})`);
+    this.discardOverlay.instruction.setText(`Chá»n ${this.discardRequiredCount} lÃ¡ bÃ i Ä‘á»ƒ bá» (${selectedCount}/${this.discardRequiredCount})`);
     const canConfirm = selectedCount === this.discardRequiredCount;
     this.discardOverlay.confirmButton.alpha = canConfirm ? 1 : 0.45;
     this.discardOverlay.confirmButton.setScale(1);
-    this.discardOverlay.confirmLabel.setText(canConfirm ? 'Xác nhận' : 'Chọn đủ lá');
+    this.discardOverlay.confirmLabel.setText(canConfirm ? 'XÃ¡c nháº­n' : 'Chá»n Ä‘á»§ lÃ¡');
   }
 
   private updateDiscardOverlayTimer(): void {
     if (!this.discardOverlay.container.visible) return;
     const remainingMs = Math.max(0, this.discardExpiresAt - Date.now());
     const remainingSec = Math.ceil(remainingMs / 1000);
-    this.discardOverlay.timerText.setText(`Tự động random sau: ${remainingSec}s`);
+    this.discardOverlay.timerText.setText(`Tá»± Ä‘á»™ng random sau: ${remainingSec}s`);
   }
 
   private hideDiscardOverlay(): void {
@@ -725,7 +725,7 @@ export class UIScene extends Phaser.Scene {
     root.setDepth(135);
     root.setVisible(false);
 
-    const title = this.add.text(0, -92, 'Di chuyển', {
+    const title = this.add.text(0, -92, 'Di chuyá»ƒn', {
       fontFamily: 'Arial',
       fontSize: '15px',
       color: '#cfdcff',

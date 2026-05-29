@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+﻿import * as Phaser from 'phaser';
 import { CardState } from '../../types/game';
 
 export class CardPanel {
@@ -28,7 +28,7 @@ export class CardPanel {
     background.lineStyle(2, 0x2f477a, 0.88);
     background.strokeRoundedRect(-this.width / 2, -44, this.width, 88, 12);
 
-    this.titleText = this.scene.add.text(-this.width / 2 + 10, -58, 'Thẻ bài của bạn', {
+    this.titleText = this.scene.add.text(-this.width / 2 + 10, -58, 'Tháº» bÃ i cá»§a báº¡n', {
       fontFamily: 'Arial',
       fontSize: '14px',
       color: '#cfdcff',
@@ -36,7 +36,7 @@ export class CardPanel {
     });
     this.titleText.setOrigin(0, 0.5);
 
-    this.emptyText = this.scene.add.text(0, 0, 'Không có bài', {
+    this.emptyText = this.scene.add.text(0, 0, 'KhÃ´ng cÃ³ bÃ i', {
       fontFamily: 'Arial',
       fontSize: '15px',
       color: '#9ab0dc',

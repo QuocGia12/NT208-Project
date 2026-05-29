@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+﻿import * as Phaser from 'phaser';
 import { SocketClient } from '../../lib/SocketClient';
 import {
   CardState,
@@ -98,24 +98,24 @@ export class BoardScene extends Phaser.Scene {
       if (!sprite1 || !sprite2 || !p1State || !p2State) continue;
       if (!p1State.hasSpawned || !p2State.hasSpawned) continue;
 
-      // Tính khoảng cách trên board để đổi màu
+      // TÃ­nh khoáº£ng cÃ¡ch trÃªn board Ä‘á»ƒ Ä‘á»•i mÃ u
       const dist = this.calculateTetherDistance(p1State.position, p2State.position);
 
       const tetherLimit = team.tetherLength;
 
-      // Màu mặc định: trắng (rất an toàn)
-      // Vàng (gần tới giới hạn - 2 ô)
-      // Đỏ (bằng giới hạn)
+      // MÃ u máº·c Ä‘á»‹nh: tráº¯ng (ráº¥t an toÃ n)
+      // VÃ ng (gáº§n tá»›i giá»›i háº¡n - 2 Ã´)
+      // Äá» (báº±ng giá»›i háº¡n)
       let lineColor = 0xffffff;
       if (dist >= tetherLimit) {
-        lineColor = 0xff4444; // Đỏ
+        lineColor = 0xff4444; // Äá»
       } else if (dist >= Math.max(1, tetherLimit - 2)) {
-        lineColor = 0xffd700; // Vàng
+        lineColor = 0xffd700; // VÃ ng
       }
 
       this.tetherGraphics.lineStyle(4, lineColor, 0.7);
       
-      // Vẽ nét đứt để trông đẹp hơn
+      // Váº½ nÃ©t Ä‘á»©t Ä‘á»ƒ trÃ´ng Ä‘áº¹p hÆ¡n
       const p1x = sprite1.container.x;
       const p1y = sprite1.container.y;
       const p2x = sprite2.container.x;
@@ -245,7 +245,7 @@ export class BoardScene extends Phaser.Scene {
 
   private onPlayerRespawn(payload: any): void {
     const data = payload?.data ?? payload;
-    // Test 7: Respawn, not elimination — emit for UIScene banner
+    // Test 7: Respawn, not elimination â€” emit for UIScene banner
     this.events.emit('player-eliminated', data);
   }
 
@@ -283,7 +283,7 @@ export class BoardScene extends Phaser.Scene {
       this.setHelperCardHighlights(helperCardIds);
       this.events.emit('game-error', {
         ...error,
-        message: error?.message ?? 'Chọn thêm 1 lá di chuyển để dùng cùng Đổi vị trí đồng đội.',
+        message: error?.message ?? 'Chá»n thÃªm 1 lÃ¡ di chuyá»ƒn Ä‘á»ƒ dÃ¹ng cÃ¹ng Äá»•i vá»‹ trÃ­ Ä‘á»“ng Ä‘á»™i.',
       });
       return;
     }
@@ -459,13 +459,13 @@ export class BoardScene extends Phaser.Scene {
         this.pendingChangeTeammateCardId = null;
         this.pendingTargetCardId = null;
         this.clearHelperCardHighlights();
-        this.events.emit('game-error', { message: 'Đã hủy chọn Đổi vị trí đồng đội.' });
+        this.events.emit('game-error', { message: 'ÄÃ£ há»§y chá»n Äá»•i vá»‹ trÃ­ Ä‘á»“ng Ä‘á»™i.' });
         return;
       }
 
       if (!this.isMovementCard(card.type)) {
         this.events.emit('game-error', {
-          message: 'Hãy chọn 1 lá di chuyển hợp lệ để kết hợp với Đổi vị trí đồng đội.',
+          message: 'HÃ£y chá»n 1 lÃ¡ di chuyá»ƒn há»£p lá»‡ Ä‘á»ƒ káº¿t há»£p vá»›i Äá»•i vá»‹ trÃ­ Ä‘á»“ng Ä‘á»™i.',
         });
         return;
       }
@@ -500,7 +500,7 @@ export class BoardScene extends Phaser.Scene {
       this.setHelperCardHighlights([]);
       this.socketClient.sendPlayCard(cardId);
       this.events.emit('game-error', {
-        message: 'Đang lấy danh sách lá di chuyển hợp lệ...',
+        message: 'Äang láº¥y danh sÃ¡ch lÃ¡ di chuyá»ƒn há»£p lá»‡...',
       });
       return;
     }
