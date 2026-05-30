@@ -3,7 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 
-import { AuthShell } from '@/components/auth/auth-shell';
+import {
+  AuthImageButton,
+  AuthInput,
+  AuthPanel,
+  AuthTextButtonLink,
+  FigmaAuthScene
+} from '@/components/auth/figma-auth-scene';
 import { loginRequest } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -29,7 +35,7 @@ export default function LoginPage() {
     setErrorMessage(null);
 
     if (!username.trim() || !password) {
-      setErrorMessage('Please enter both username and password.');
+      setErrorMessage('Vui long nhap day du ten dang nhap va mat khau.');
       return;
     }
 
@@ -42,56 +48,70 @@ export default function LoginPage() {
       });
 
       setSession(response.token, response.user);
-      router.replace('/lobby');
       setPassword('');
+      router.replace('/lobby');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to login right now.');
+      setErrorMessage(error instanceof Error ? error.message : 'Khong the dang nhap luc nay.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <AuthShell
-      title="Login"
-      subtitle="Return to the battlefield and reclaim your Zodiac glory."
-      alternateActionLabel="No account yet?"
-      alternateActionHref="/register"
-      alternateActionText="Create one"
+    <FigmaAuthScene
+      frameAlt="Khung dang nhap"
+      frameHeight={728}
+      frameSrc="/game-ui/sign-up-and-login/Background_Login.svg"
+      frameWidth={664}
+      logMessage={errorMessage ?? (isLoading ? 'Đang vào chơi...' : 'Xin mời đăng nhập')}
     >
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <label className="block">
-          <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-cyan-200/90">Username</span>
-          <input
-            autoComplete="username"
-            className="moba-input"
-            onChange={(event) => setUsername(event.target.value)}
-            placeholder="Enter your commander name"
-            required
-            value={username}
+      <AuthPanel>
+        <form className="absolute inset-0" onSubmit={handleSubmit}>
+          <div className="absolute left-[18.95%] top-[28.7%] w-[61.6%]">
+            <AuthInput
+              assetSrc="/game-ui/sign-up-and-login/input_username.svg"
+              inputProps={{
+                autoComplete: 'username',
+                maxLength: 20,
+                onChange: (event) => setUsername(event.target.value),
+                placeholder: 'Tên đăng nhập',
+                required: true,
+                value: username
+              }}
+            />
+          </div>
+
+          <div className="absolute left-[18.95%] top-[43.1%] w-[61.6%]">
+            <AuthInput
+              assetSrc="/game-ui/sign-up-and-login/input_password.svg"
+              inputProps={{
+                autoComplete: 'current-password',
+                minLength: 6,
+                onChange: (event) => setPassword(event.target.value),
+                placeholder: 'Mật khẩu',
+                required: true,
+                type: 'password',
+                value: password
+              }}
+            />
+          </div>
+
+          <AuthImageButton
+            alt="Vao choi"
+            className="absolute left-[5.4%] top-[55%] aspect-[593/189] w-[89.3%]"
+            disabled={isLoading}
+            src="/game-ui/sign-up-and-login/btn_Login.svg"
+            type="submit"
           />
-        </label>
 
-        <label className="block">
-          <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-cyan-200/90">Password</span>
-          <input
-            autoComplete="current-password"
-            className="moba-input"
-            minLength={6}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Enter your secure password"
-            required
-            type="password"
-            value={password}
+          <AuthTextButtonLink
+            alt="Dang ky"
+            className="absolute left-[31.4%] top-[53%] aspect-[246/67] w-[37.05%]"
+            href="/register"
+            src="/game-ui/sign-up-and-login/btn_SignUp.svg"
           />
-        </label>
-
-        {errorMessage ? <p className="text-sm text-rose-300">{errorMessage}</p> : null}
-
-        <button className="moba-button w-full" disabled={isLoading} type="submit">
-          {isLoading ? 'Signing in...' : 'Enter Arena'}
-        </button>
-      </form>
-    </AuthShell>
+        </form>
+      </AuthPanel>
+    </FigmaAuthScene>
   );
 }

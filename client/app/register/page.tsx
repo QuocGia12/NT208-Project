@@ -1,18 +1,35 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useEffect, useState } from 'react';
 
-import { AuthShell } from '@/components/auth/auth-shell';
+import {
+  AuthImageButton,
+  AuthInput,
+  AuthPanel,
+  AuthTextButtonLink,
+  FigmaAuthScene
+} from '@/components/auth/figma-auth-scene';
 import { registerRequest } from '@/lib/api/auth';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function RegisterPage() {
+  const router = useRouter();
+
+  const token = useAuthStore((state) => state.token);
   const [username, setUsername] = useState('');
+  const [avatar, setAvatar] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [avatar, setAvatar] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (token) {
+      router.replace('/lobby');
+    }
+  }, [token, router]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -20,17 +37,17 @@ export default function RegisterPage() {
     setSuccessMessage(null);
 
     if (!username.trim() || !password) {
-      setErrorMessage('Username and password are required.');
+      setErrorMessage('Tên đăng nhập và mật khẩu là bắt buộc.');
       return;
     }
 
     if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.');
+      setErrorMessage('Mật khẩu phải có ít nhất 6 ký tự.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setErrorMessage('Password confirmation does not match.');
+      setErrorMessage('Mật khẩu nhập lại chưa khớp.');
       return;
     }
 
@@ -43,87 +60,103 @@ export default function RegisterPage() {
         avatar: avatar.trim() || undefined
       });
 
-      setSuccessMessage(`Account created for ${response.user.username}. You can now login.`);
+      setSuccessMessage(`Đã tạo tài khoản cho ${response.user.username}. ạn có thể đăng nhập ngay.`);
       setPassword('');
       setConfirmPassword('');
+      setAvatar('');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to register right now.');
+      setErrorMessage(error instanceof Error ? error.message : 'Khôngthể tạo tài khoản lúc này.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <AuthShell
-      title="Register"
-      subtitle="Forge your legend before the 12 Zodiac war begins."
-      alternateActionLabel="Already have an account?"
-      alternateActionHref="/login"
-      alternateActionText="Go to login"
+    <FigmaAuthScene
+      frameAlt="Khung dang ky"
+      frameHeight={854}
+      frameSrc="/game-ui/sign-up-and-login/background_SignUp.svg"
+      frameWidth={700}
+      logMessage={
+        errorMessage ?? successMessage ?? (isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản để bắt đầu hành trình chinh phục!')
+      }
     >
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <label className="block">
-          <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-cyan-200/90">Username</span>
-          <input
-            autoComplete="username"
-            className="moba-input"
-            maxLength={20}
-            minLength={3}
-            onChange={(event) => setUsername(event.target.value)}
-            placeholder="Pick your warrior name"
-            required
-            value={username}
+      <AuthPanel>
+        <form className="absolute inset-0" onSubmit={handleSubmit}>
+          <div className="absolute left-[21%] top-[22%] w-[58.45%]">
+            <AuthInput
+              assetSrc="/game-ui/sign-up-and-login/input_username.svg"
+              inputProps={{
+                autoComplete: 'username',
+                maxLength: 20,
+                minLength: 3,
+                onChange: (event) => setUsername(event.target.value),
+                placeholder: 'Tên đăng nhập',
+                required: true,
+                value: username
+              }}
+            />
+          </div>
+
+          <div className="absolute left-[21%] top-[32%] w-[58.45%]">
+            <AuthInput
+              assetSrc="/game-ui/sign-up-and-login/input_email.svg"
+              inputProps={{
+                autoComplete: 'url',
+                onChange: (event) => setAvatar(event.target.value),
+                placeholder: 'Avatar URL (tùy chọn)',
+                type: 'url',
+                value: avatar
+              }}
+            />
+          </div>
+
+          <div className="absolute left-[21%] top-[42%] w-[58.45%]">
+            <AuthInput
+              assetSrc="/game-ui/sign-up-and-login/input_password.svg"
+              inputProps={{
+                autoComplete: 'new-password',
+                minLength: 6,
+                onChange: (event) => setPassword(event.target.value),
+                placeholder: 'Mật khẩu',
+                required: true,
+                type: 'password',
+                value: password
+              }}
+            />
+          </div>
+
+          <div className="absolute left-[21%] top-[52%] w-[58.45%]">
+            <AuthInput
+              assetSrc="/game-ui/sign-up-and-login/input_password.svg"
+              inputProps={{
+                autoComplete: 'new-password',
+                minLength: 6,
+                onChange: (event) => setConfirmPassword(event.target.value),
+                placeholder: 'Nhập lại mật khẩu',
+                required: true,
+                type: 'password',
+                value: confirmPassword
+              }}
+            />
+          </div>
+
+          <AuthImageButton
+            alt="Tao tai khoan"
+            className="absolute left-[7.1%] top-[60%] aspect-[593/189] w-[84.7%]"
+            disabled={isLoading}
+            src="/game-ui/sign-up-and-login/btn_CreateAccount.svg"
+            type="submit"
           />
-        </label>
 
-        <label className="block">
-          <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-cyan-200/90">Password</span>
-          <input
-            autoComplete="new-password"
-            className="moba-input"
-            minLength={6}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Set a secure password"
-            required
-            type="password"
-            value={password}
+          <AuthTextButtonLink
+            alt="Dang nhap"
+            className="absolute left-[32%] top-[58%] aspect-[246/67] w-[35.15%]"
+            href="/login"
+            src="/game-ui/sign-up-and-login/btn_BackToLogin.svg"
           />
-        </label>
-
-        <label className="block">
-          <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-cyan-200/90">Confirm Password</span>
-          <input
-            autoComplete="new-password"
-            className="moba-input"
-            minLength={6}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="Repeat your password"
-            required
-            type="password"
-            value={confirmPassword}
-          />
-        </label>
-
-        <label className="block">
-          <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-cyan-200/90">
-            Avatar URL (optional)
-          </span>
-          <input
-            className="moba-input"
-            onChange={(event) => setAvatar(event.target.value)}
-            placeholder="https://example.com/avatar.png"
-            type="url"
-            value={avatar}
-          />
-        </label>
-
-        {errorMessage ? <p className="text-sm text-rose-300">{errorMessage}</p> : null}
-        {successMessage ? <p className="text-sm text-emerald-300">{successMessage}</p> : null}
-
-        <button className="moba-button w-full" disabled={isLoading} type="submit">
-          {isLoading ? 'Creating account...' : 'Join the War'}
-        </button>
-      </form>
-    </AuthShell>
+        </form>
+      </AuthPanel>
+    </FigmaAuthScene>
   );
 }
