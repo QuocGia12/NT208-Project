@@ -18,6 +18,7 @@ import {
   loadGameSettings
 } from '@/lib/game-audio-settings';
 import { useAuthStore } from '@/store/auth-store';
+import { FixedAspectScene } from '@/components/layout/fixed-aspect-scene';
 
 type MatchmakingScreen = 'menu' | 'party2' | 'party4';
 
@@ -408,9 +409,9 @@ export const MatchmakingFlow = ({ screen }: MatchmakingFlowProps) => {
       : 'Đang kết nối game server';
 
   return (
-    <main className="min-h-screen bg-[#091321] px-3 py-3 text-[#fff5d6] sm:px-5">
-      <div className="mx-auto flex min-h-[calc(100vh-1.5rem)] w-full max-w-[1800px] items-center justify-center">
-        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[28px] border border-[#f1d08a]/20 bg-[#0f1c2d] shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
+    <main className="h-[100dvh] overflow-hidden bg-[#091321] text-[#fff5d6]">
+      <FixedAspectScene>
+        <div className="relative h-full w-full overflow-hidden bg-[#0f1c2d] shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
           <img
             alt=""
             aria-hidden="true"
@@ -463,7 +464,7 @@ export const MatchmakingFlow = ({ screen }: MatchmakingFlowProps) => {
 
           <StatusLog message={statusMessage} secondary={statusLine} screen={screen} />
         </div>
-      </div>
+      </FixedAspectScene>
     </main>
   );
 };

@@ -309,8 +309,12 @@ export class MatchmakingManager {
     if (players.length !== 4) return;
 
     const room = this.roomManager.createRoom(this.io);
-    const gamePlayers: PlayerWithTeamInput[] = players.map(player => ({
-      id: player.id,
+    const runtimePlayers = players.map(player => ({
+      ...player,
+      runtimeId: this.toRuntimePlayerId(player),
+    }));
+    const gamePlayers: PlayerWithTeamInput[] = runtimePlayers.map(player => ({
+      id: player.runtimeId,
       socketId: player.socketId,
       name: player.username,
       avatar: player.avatar,
@@ -319,17 +323,34 @@ export class MatchmakingManager {
       teamSlot: player.teamSlot,
     }));
 
-    room.startGameWithTeams(gamePlayers);
+    try {
+      room.startGameWithTeams(gamePlayers);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to create game room.';
+      for (const player of players) {
+        const socket = this.io.sockets.sockets.get(player.socketId);
+        if (!socket) continue;
+        this.emitMatchmakingError(socket, 'MATCH_CREATE_FAILED', `Failed to create match: ${message}`);
+      }
+      return;
+    }
 
-    for (const player of players) {
-      const { socketId: _socketId, ...publicPlayer } = player;
-      const publicPlayers = players.map(({ socketId, ...p }) => p);
+    for (const player of runtimePlayers) {
+      const { runtimeId, socketId: _socketId, ...publicPlayer } = player;
+      const publicPlayers = runtimePlayers.map(({ runtimeId: publicRuntimeId, socketId, ...p }) => ({
+        ...p,
+        id: publicRuntimeId,
+      }));
       this.io.to(player.socketId).emit('match:found', {
         roomId: room.id,
         players: publicPlayers,
-        yourPlayerId: publicPlayer.id,
+        yourPlayerId: runtimeId,
       });
     }
+  }
+
+  private toRuntimePlayerId(player: MatchPlayer): string {
+    return `${player.id}::${player.socketId}`;
   }
 
   private partyPlayersAsTeam(party: Party, teamId: TeamId): MatchPlayer[] {

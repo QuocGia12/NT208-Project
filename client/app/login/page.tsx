@@ -35,7 +35,7 @@ export default function LoginPage() {
     setErrorMessage(null);
 
     if (!username.trim() || !password) {
-      setErrorMessage('Vui long nhap day du ten dang nhap va mat khau.');
+      setErrorMessage('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.');
       return;
     }
 
@@ -51,7 +51,7 @@ export default function LoginPage() {
       setPassword('');
       router.replace('/lobby');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Khong the dang nhap luc nay.');
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể đăng nhập vào lúc này. Vui lòng thử lại sau.');
     } finally {
       setIsLoading(false);
     }
@@ -62,8 +62,9 @@ export default function LoginPage() {
       frameAlt="Khung dang nhap"
       frameHeight={728}
       frameSrc="/game-ui/sign-up-and-login/Background_Login.svg"
+      frameTop={176}
       frameWidth={664}
-      logMessage={errorMessage ?? (isLoading ? 'Đang vào chơi...' : 'Xin mời đăng nhập')}
+      logMessage={errorMessage ?? (isLoading ? 'Đang đăng nhập...' : 'Xin mời đăng nhập')}
     >
       <AuthPanel>
         <form className="absolute inset-0" onSubmit={handleSubmit}>

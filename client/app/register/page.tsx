@@ -37,17 +37,17 @@ export default function RegisterPage() {
     setSuccessMessage(null);
 
     if (!username.trim() || !password) {
-      setErrorMessage('Tên đăng nhập và mật khẩu là bắt buộc.');
+      setErrorMessage('Ten dang nhap va mat khau la bat buoc.');
       return;
     }
 
     if (password.length < 6) {
-      setErrorMessage('Mật khẩu phải có ít nhất 6 ký tự.');
+      setErrorMessage('Mat khau phai co it nhat 6 ky tu.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setErrorMessage('Mật khẩu nhập lại chưa khớp.');
+      setErrorMessage('Mat khau nhap lai chua khop.');
       return;
     }
 
@@ -60,12 +60,12 @@ export default function RegisterPage() {
         avatar: avatar.trim() || undefined
       });
 
-      setSuccessMessage(`Đã tạo tài khoản cho ${response.user.username}. ạn có thể đăng nhập ngay.`);
+      setSuccessMessage(`Đã tạo tài khoản cho ${response.user.username}. Bạn có thể đăng nhập ngay.`);
       setPassword('');
       setConfirmPassword('');
       setAvatar('');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Khôngthể tạo tài khoản lúc này.');
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể tạo tài khoản vào lúc này. Vui lòng thử lại sau.');
     } finally {
       setIsLoading(false);
     }
@@ -76,9 +76,10 @@ export default function RegisterPage() {
       frameAlt="Khung dang ky"
       frameHeight={854}
       frameSrc="/game-ui/sign-up-and-login/background_SignUp.svg"
+      frameTop={110}
       frameWidth={700}
       logMessage={
-        errorMessage ?? successMessage ?? (isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản để bắt đầu hành trình chinh phục!')
+        errorMessage ?? successMessage ?? (isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản để bắt đầu hành trình.')
       }
     >
       <AuthPanel>
