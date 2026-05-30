@@ -19,6 +19,8 @@ import { GAME_UI_LAYOUT } from '../layout/gameUILayout';
 import type { PreviewPrivateState } from '../mock/gamePreviewData';
 
 export class BoardScene extends Phaser.Scene {
+  private static readonly PIECE_Y_OFFSET = 7;
+
   private boardRenderer!: BoardRenderer;
   private backgroundImage!: Phaser.GameObjects.Image;
   private boardTableBackground!: Phaser.GameObjects.Graphics;
@@ -356,7 +358,7 @@ export class BoardScene extends Phaser.Scene {
     for (const player of players) {
       if (!this.playerSprites.has(player.id)) {
         const color = BoardRenderer.PLAYER_COLORS[player.turnIndex % BoardRenderer.PLAYER_COLORS.length];
-        this.playerSprites.set(player.id, new PlayerSprite(this, player.id, player.name, color));
+        this.playerSprites.set(player.id, new PlayerSprite(this, player.id, player.zodiac, color));
       }
     }
 
@@ -394,7 +396,7 @@ export class BoardScene extends Phaser.Scene {
           player.position.y
         );
 
-        void sprite.moveTo(worldX, worldY, 200);
+        void sprite.moveTo(worldX, worldY + BoardScene.PIECE_Y_OFFSET, 200);
 
         // Test 7: No permanent elimination, all players are always active
         sprite.setActive(player.id === currentTurnPlayerId);

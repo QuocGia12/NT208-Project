@@ -1,5 +1,9 @@
 import * as Phaser from 'phaser';
 
+import type { ZodiacName } from '@/types/game';
+
+import { getZodiacPieceKey } from '../assets/gameUIAssets';
+
 export class PlayerSprite {
   public scene: Phaser.Scene;
   public container: Phaser.GameObjects.Container;
@@ -11,11 +15,17 @@ export class PlayerSprite {
   private eliminated: boolean;
   private locked: boolean;
   private xOverlay: Phaser.GameObjects.Text;
+  private pieceSprite: Phaser.GameObjects.Image;
   private baseWorldX: number;
   private baseWorldY: number;
   private stackOffset: { x: number; y: number };
 
-  constructor(scene: Phaser.Scene, playerId: string, name: string, color: number) {
+  constructor(
+    scene: Phaser.Scene,
+    playerId: string,
+    zodiac: ZodiacName,
+    color: number
+  ) {
     this.scene = scene;
     this.playerId = playerId;
     this.color = color;
@@ -27,31 +37,33 @@ export class PlayerSprite {
     this.baseWorldY = 0;
     this.stackOffset = { x: 0, y: 0 };
 
-    const outline = this.scene.add.circle(0, 0, 21, 0xffffff, 0).setStrokeStyle(2, 0xffffff, 0.8);
-    const body = this.scene.add.circle(0, 0, 18, color, 1).setStrokeStyle(2, 0x0f1118, 0.85);
+    const shadow = this.scene.add.ellipse(0, 20, 30, 10, 0x150e09, 0.34);
+    shadow.setDepth(0);
 
-    const safeName = name.length > 10 ? `${name.slice(0, 10)}...` : name;
-    const nameText = this.scene.add.text(0, 27, safeName, {
-      fontFamily: 'Arial',
-      fontSize: '12px',
-      color: '#ffffff',
-      stroke: '#0f1118',
-      strokeThickness: 3,
-    });
-    nameText.setOrigin(0.5, 0);
+    this.pieceSprite = this.scene.add.image(0, -4, getZodiacPieceKey(zodiac));
+    const pieceTexture = this.scene.textures.get(getZodiacPieceKey(zodiac)).getSourceImage() as {
+      width?: number;
+      height?: number;
+    };
+    const sourceHeight = pieceTexture?.height ?? 80;
+    const targetHeight = 36;
+    const scale = targetHeight / sourceHeight;
+    this.pieceSprite.setScale(scale);
+    this.pieceSprite.setDepth(1);
 
-    this.xOverlay = this.scene.add.text(0, 0, 'X', {
+    this.xOverlay = this.scene.add.text(0, -2, 'X', {
       fontFamily: 'Arial',
       fontSize: '28px',
       fontStyle: 'bold',
       color: '#ff5c5c',
       stroke: '#250000',
-      strokeThickness: 4,
+      strokeThickness: 4
     });
     this.xOverlay.setOrigin(0.5);
     this.xOverlay.setVisible(false);
+    this.xOverlay.setDepth(2);
 
-    this.container = this.scene.add.container(0, 0, [outline, body, nameText, this.xOverlay]);
+    this.container = this.scene.add.container(0, 0, [shadow, this.pieceSprite, this.xOverlay]);
     this.container.setDepth(40);
   }
 
@@ -94,7 +106,7 @@ export class PlayerSprite {
         onComplete: () => {
           this.moveTween = null;
           resolve();
-        },
+        }
       });
     });
   }
@@ -113,12 +125,12 @@ export class PlayerSprite {
       if (this.pulseTween) return;
       this.pulseTween = this.scene.tweens.add({
         targets: this.container,
-        scaleX: { from: 1, to: 1.15 },
-        scaleY: { from: 1, to: 1.15 },
+        scaleX: { from: 1, to: 1.12 },
+        scaleY: { from: 1, to: 1.12 },
         duration: 430,
         yoyo: true,
         repeat: -1,
-        ease: 'Sine.InOut',
+        ease: 'Sine.InOut'
       });
       return;
     }
@@ -172,7 +184,7 @@ export class PlayerSprite {
       const offsets = [
         { x: 0, y: -gap },
         { x: -gap, y: gap * 0.7 },
-        { x: gap, y: gap * 0.7 },
+        { x: gap, y: gap * 0.7 }
       ];
       return offsets[index] ?? { x: 0, y: 0 };
     }
@@ -182,7 +194,7 @@ export class PlayerSprite {
         { x: -gap, y: -gap },
         { x: gap, y: -gap },
         { x: -gap, y: gap },
-        { x: gap, y: gap },
+        { x: gap, y: gap }
       ];
       return offsets[index] ?? { x: 0, y: 0 };
     }
@@ -190,7 +202,7 @@ export class PlayerSprite {
     const angle = (index / total) * Math.PI * 2;
     return {
       x: Math.cos(angle) * gap,
-      y: Math.sin(angle) * gap,
+      y: Math.sin(angle) * gap
     };
   }
 }

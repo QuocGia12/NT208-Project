@@ -10,13 +10,15 @@ interface Props {
   previewPrivateState?: PreviewPrivateState;
 }
 
+type PhaserGameInstance = import('phaser').Game;
+
 const socketClient = SocketClient.getInstance();
 
 const PhaserGame: React.FC<Props> = ({ roomId, playerId, previewState, previewPrivateState }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let game: { destroy: (removeCanvas?: boolean) => void } | null = null;
+    let game: PhaserGameInstance | null = null;
     let cancelled = false;
     const isPreview = Boolean(previewState && previewPrivateState);
 

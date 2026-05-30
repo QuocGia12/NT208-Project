@@ -70,6 +70,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
   const router = useRouter();
   const isLobbyRoute = pathname === '/lobby' || pathname === '/';
   const isGameRoute = pathname.startsWith('/game/');
+  const isMatchmakingRoute = pathname.startsWith('/matchmaking');
 
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
@@ -191,7 +192,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
     );
   }
 
-  if (isGameRoute) {
+  if (isGameRoute || isMatchmakingRoute) {
     return <>{children}</>;
   }
 

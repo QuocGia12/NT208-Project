@@ -64,7 +64,7 @@ export class TimerBar {
     const remaining = this.expiresAt - Date.now();
     const ratio = Phaser.Math.Clamp(remaining / this.totalDuration, 0, 1);
 
-    let color = GAME_UI_THEME.success;
+    let color: number = GAME_UI_THEME.success;
     if (ratio <= 0.2) {
       color = GAME_UI_THEME.danger;
       this.ensurePulse();

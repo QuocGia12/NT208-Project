@@ -70,6 +70,18 @@ export const GAME_UI_IMAGE_ASSETS: AssetDef[] = [
   { key: 'ui-icon-suu', path: '/game-ui/zodiac-icons/icon-suu.svg' },
   { key: 'ui-icon-dau', path: '/game-ui/zodiac-icons/icon-dau.svg' },
   { key: 'ui-icon-mao', path: '/game-ui/zodiac-icons/icon-mao.svg' },
+  { key: 'ui-piece-tys', path: '/game-ui/pieces/Piece_Tys.svg' },
+  { key: 'ui-piece-suu', path: '/game-ui/pieces/Piece_Suu.svg' },
+  { key: 'ui-piece-dan', path: '/game-ui/pieces/Piece_Dan.svg' },
+  { key: 'ui-piece-mao', path: '/game-ui/pieces/Piece_Mao.svg' },
+  { key: 'ui-piece-thin', path: '/game-ui/pieces/Piece_Thin.svg' },
+  { key: 'ui-piece-tyj', path: '/game-ui/pieces/Piece_Tyj.svg' },
+  { key: 'ui-piece-ngo', path: '/game-ui/pieces/Piece_Ngo.svg' },
+  { key: 'ui-piece-mui', path: '/game-ui/pieces/Piece_Mui.svg' },
+  { key: 'ui-piece-than', path: '/game-ui/pieces/Piece_Than.svg' },
+  { key: 'ui-piece-dau', path: '/game-ui/pieces/Piece_Dau.svg' },
+  { key: 'ui-piece-tuat', path: '/game-ui/pieces/Piece_Tuat.svg' },
+  { key: 'ui-piece-hoi', path: '/game-ui/pieces/Piece_Hoi.svg' },
 ];
 
 export const preloadGameUIAssets = (scene: Phaser.Scene): void => {
@@ -109,8 +121,27 @@ const ZODIAC_ICON_KEYS_BY_SLUG: Record<string, string> = {
   hoi: 'ui-icon-hoi',
 };
 
+const ZODIAC_PIECE_KEYS_BY_SLUG: Record<string, string> = {
+  ty: 'ui-piece-tys',
+  suu: 'ui-piece-suu',
+  dan: 'ui-piece-dan',
+  mao: 'ui-piece-mao',
+  thin: 'ui-piece-thin',
+  ti: 'ui-piece-tyj',
+  ngo: 'ui-piece-ngo',
+  mui: 'ui-piece-mui',
+  than: 'ui-piece-than',
+  dau: 'ui-piece-dau',
+  tuat: 'ui-piece-tuat',
+  hoi: 'ui-piece-hoi',
+};
+
 export const getZodiacIconKey = (zodiac: ZodiacName | null | undefined): string | null => {
   return ZODIAC_ICON_KEYS_BY_SLUG[normalizeZodiacName(zodiac)] ?? null;
+};
+
+export const getZodiacPieceKey = (zodiac: ZodiacName | null | undefined): string => {
+  return ZODIAC_PIECE_KEYS_BY_SLUG[normalizeZodiacName(zodiac)] ?? 'ui-piece-tys';
 };
 
 export const CARD_TEXTURE_KEYS: Partial<Record<CardType, string>> = {
