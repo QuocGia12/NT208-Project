@@ -3,7 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import {
+  GuideBookButton,
+  GuideBookModal,
+  guidebookStyle
+} from '@/components/app/guidebook-modal';
 import PhaserGame from '@/components/PhaserGame';
+import { FixedAspectScene } from '@/components/layout/fixed-aspect-scene';
 import {
   type GameMatchFound,
   type GameSocketError,
@@ -29,6 +35,7 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
 
+  const [isGuideBookOpen, setIsGuideBookOpen] = useState(false);
   const [socketReady, setSocketReady] = useState(gameSocketClient.isConnected());
   const [status, setStatus] = useState(
     gameSocketClient.isConnected() ? 'Connected to game server.' : 'Connecting to game server...'
@@ -129,7 +136,20 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
 
       <div className="phaser-canvas-frame">
         {socketReady ? (
-          <PhaserGame roomId={normalizedRoomId} playerId={matchedPlayerId} />
+          <FixedAspectScene designHeight={720} designWidth={1280}>
+            <div className="relative h-full w-full overflow-hidden bg-[#050816]">
+              <div className="absolute inset-0">
+                <PhaserGame roomId={normalizedRoomId} playerId={matchedPlayerId} />
+              </div>
+              <GuideBookButton
+                alt="Mở hướng dẫn"
+                onClick={() => setIsGuideBookOpen(true)}
+                src="/game-ui/btn_GuideBook.svg"
+                style={guidebookStyle(17, 14, 100, 66.39)}
+              />
+              <GuideBookModal isOpen={isGuideBookOpen} onClose={() => setIsGuideBookOpen(false)} />
+            </div>
+          </FixedAspectScene>
         ) : (
           <div className="game-route-loading">
             <p className="game-route-loading-title moba-heading">Connecting...</p>

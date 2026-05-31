@@ -3,6 +3,11 @@
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
+import {
+  GuideBookButton,
+  GuideBookModal,
+  guidebookStyle
+} from '@/components/app/guidebook-modal';
 import PhaserGame from '@/components/PhaserGame';
 import {
   createPreviewPayload,
@@ -109,6 +114,7 @@ const scenarioLabels: Record<GamePreviewScenario, { title: string; note: string 
 export const GamePreviewShell = () => {
   const [mode, setMode] = useState<PreviewMode>('figma');
   const [scenario, setScenario] = useState<GamePreviewScenario>('move');
+  const [isGuideBookOpen, setIsGuideBookOpen] = useState(false);
 
   const payload = useMemo(() => createPreviewPayload(scenario), [scenario]);
 
@@ -213,13 +219,22 @@ export const GamePreviewShell = () => {
             </div>
           ) : (
             <div className="aspect-[16/9] w-full overflow-hidden rounded-[20px] bg-[#0b1024]">
-              <PhaserGame
-                key={scenario}
-                playerId={payload.privateState.playerId}
-                previewPrivateState={payload.privateState}
-                previewState={payload.state}
-                roomId={payload.state.roomId}
-              />
+              <div className="relative h-full w-full">
+                <PhaserGame
+                  key={scenario}
+                  playerId={payload.privateState.playerId}
+                  previewPrivateState={payload.privateState}
+                  previewState={payload.state}
+                  roomId={payload.state.roomId}
+                />
+                <GuideBookButton
+                  alt="Mở hướng dẫn"
+                  onClick={() => setIsGuideBookOpen(true)}
+                  src="/game-ui/btn_GuideBook.svg"
+                  style={guidebookStyle(17, 14, 100, 66.39)}
+                />
+                <GuideBookModal isOpen={isGuideBookOpen} onClose={() => setIsGuideBookOpen(false)} />
+              </div>
             </div>
           )}
         </div>

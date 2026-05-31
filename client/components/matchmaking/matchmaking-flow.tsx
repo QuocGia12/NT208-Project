@@ -17,6 +17,11 @@ import {
   getEffectiveMusicVolume,
   loadGameSettings
 } from '@/lib/game-audio-settings';
+import {
+  GuideBookButton,
+  GuideBookModal,
+  guidebookStyle
+} from '@/components/app/guidebook-modal';
 import { useAuthStore } from '@/store/auth-store';
 import { FixedAspectScene } from '@/components/layout/fixed-aspect-scene';
 
@@ -62,7 +67,8 @@ const UI = {
   btnReady2: '/game-ui/create-match/create-room2/btn_Ready.svg',
   btnExit2: '/game-ui/create-match/create-room2/btn_ExitRoom.svg',
   btnReady4: '/game-ui/create-match/create-room4/btn_Ready.svg',
-  btnExit4: '/game-ui/create-match/create-room4/btn_ExitRoom.svg'
+  btnExit4: '/game-ui/create-match/create-room4/btn_ExitRoom.svg',
+  guidebook: '/game-ui/create-match/btn_GuideBook.svg'
 } as const;
 
 const toFrameStyle = (left: number, top: number, width: number, height: number) => ({
@@ -106,6 +112,7 @@ export const MatchmakingFlow = ({ screen }: MatchmakingFlowProps) => {
   const [isSocketReady, setIsSocketReady] = useState(gameSocketClient.isConnected());
   const [currentParty, setCurrentParty] = useState<GamePartyUpdate | null>(gameSocketClient.currentParty);
   const [joinCode, setJoinCode] = useState('');
+  const [isGuideBookOpen, setIsGuideBookOpen] = useState(false);
   const waitingMusicRef = useRef<HTMLAudioElement | null>(null);
   const pendingPartyTimerRef = useRef<number | null>(null);
 
@@ -462,6 +469,13 @@ export const MatchmakingFlow = ({ screen }: MatchmakingFlowProps) => {
             />
           ) : null}
 
+          <GuideBookButton
+            alt="Mở hướng dẫn"
+            onClick={() => setIsGuideBookOpen(true)}
+            src={UI.guidebook}
+            style={guidebookStyle(1713, 36, 169, 112.2)}
+          />
+          <GuideBookModal isOpen={isGuideBookOpen} onClose={() => setIsGuideBookOpen(false)} />
           <StatusLog message={statusMessage} secondary={statusLine} screen={screen} />
         </div>
       </FixedAspectScene>
