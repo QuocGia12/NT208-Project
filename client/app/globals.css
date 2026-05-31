@@ -211,7 +211,7 @@
     --panel-max-width: 1400px;
     --panel-width: 90vw;
     --panel-tabs-left: 3%;
-    --panel-tabs-top: 15%;
+    --panel-tabs-top: 18%;
     --panel-tabs-width: 18%;
     --panel-content-top: 14%;
     --panel-content-right: 5%;
@@ -229,13 +229,13 @@
     --panel-aspect-ratio: 3934 / 1939;
   }
   .panel-container-shop .panel-tabs {
-    gap: clamp(0.25rem, 2vh, 5rem);
+    gap: clamp(4.25rem, 2vh, 5rem);
   }
 
   .panel-container-friends {
     --panel-aspect-ratio: 4009 / 1944;
     --panel-tabs-left: 3%;
-    --panel-tabs-top: 17%;
+    --panel-tabs-top: 20%;
     --panel-tabs-width: 18%;
     --panel-content-top: 14%;
     --panel-content-right: 5%;
@@ -243,21 +243,24 @@
     --panel-content-left: 23%;
   }
   .panel-container-friends .panel-tabs {
-    gap: clamp(0.25rem, 2vh, 5rem);
+    gap: clamp(4.25rem, 2vh, 5rem);
   }
 
   .panel-container-leaderboard {
-    --panel-content-top: 15%;
-    --panel-content-right: 10%;
+    --panel-aspect-ratio: 3500 / 2030;
+    --panel-width: 82vw;
+    --panel-max-width: 1220px;
+    --panel-content-top: 8%;
+    --panel-content-right: 0%;
     --panel-content-bottom: 10%;
-    --panel-content-left: 10%;
+    --panel-content-left: 0%;
   }
 
   .panel-container-chat {
     --panel-content-top: 15%;
     --panel-content-right: 5%;
     --panel-content-bottom: 10%;
-    --panel-content-left: 22%;
+    --panel-content-left: 3%;
   }
 
   .panel-container-settings {
@@ -265,13 +268,13 @@
     --panel-width: min(76vw, 1300px);
     --panel-max-width: min(92vw, 1300px);
     --panel-tabs-left: 3%;
-    --panel-tabs-top: 17%;
+    --panel-tabs-top: 18%;
     --panel-tabs-width: 24%;
     --panel-content-top: 14%;
     --panel-content-right: 8%;
-    --panel-content-bottom: 10%;
+    --panel-content-bottom: 8%;
     --panel-content-left: 30%;
-    max-height: min(88dvh, 900px);
+    max-height: min(92dvh, 900px);
   }
 
   .panel-bg {
@@ -376,7 +379,7 @@
     bottom: clamp(0.5rem, 1.5vh, 1rem);
     z-index: 30;
     width: clamp(96px, 12vw, 160px);
-    min-width: 72px;
+    min-width: 25vw;
     border: 0;
     background: transparent;
     padding: 0;
@@ -2792,6 +2795,46 @@ body {
     );
   }
 
+  .chat-layout-shell {
+    display: grid;
+    grid-template-columns: minmax(160px, 0.22fr) minmax(0, 1fr);
+    gap: 3rem;
+    min-height: 90%;
+  }
+
+  .chat-friends-sidebar {
+    position: relative;
+    align-self: stretch;
+    top: 5%;
+    width: 100%;
+    min-height: 0;
+    max-height: 100%;
+    background: linear-gradient(
+      160deg,
+      rgba(92, 64, 51, 0.9) 0%,
+      rgba(79, 49, 30, 0.94) 100%
+    );
+    border-color: rgba(212, 165, 116, 0.35);
+    box-shadow:
+      0 14px 30px rgba(0, 0, 0, 0.42),
+      0 0 16px rgba(92, 64, 51, 0.18);
+    overflow-y: auto;
+    z-index: 1;
+  }
+
+  .chat-right-column {
+    min-width: 0;
+  }
+
+  .chat-main-panel {
+    min-height: clamp(24rem, 56vh, 34rem);
+  }
+
+  .chat-message-list {
+    flex: 1 1 auto;
+    max-height: none;
+  }
+
   .leaderboard-rank {
     color: #e2e8f0;
     font-size: 0.76rem;
@@ -2828,8 +2871,17 @@ body {
       padding-right: 0.6rem;
     }
 
-    .chat-layout-grid {
+    .chat-layout-shell {
       grid-template-columns: minmax(0, 1fr);
+      min-height: auto;
+    }
+
+    .chat-friends-sidebar {
+      max-height: none;
+    }
+
+    .chat-main-panel {
+      min-height: clamp(22rem, 58vh, 30rem);
     }
 
     .chat-conversation-list {

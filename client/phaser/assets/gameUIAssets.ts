@@ -97,7 +97,41 @@ const normalizeZodiacName = (value: string | null | undefined): string => {
     return '';
   }
 
-  return value
+  const trimmedValue = value.trim();
+  const explicitSlugMap: Record<string, string> = {
+    'Tý': 'ty',
+    'Tỵ': 'ti',
+    'Sửu': 'suu',
+    'Dần': 'dan',
+    'Mão': 'mao',
+    'Thìn': 'thin',
+    'Ngọ': 'ngo',
+    'Mùi': 'mui',
+    'Thân': 'than',
+    'Dậu': 'dau',
+    'Tuất': 'tuat',
+    'Hợi': 'hoi',
+    // Handle existing mojibake variants that may already be flowing through local client types.
+    'TÃ½': 'ty',
+    'Tá»µ': 'ti',
+    'Sá»­u': 'suu',
+    'Dáº§n': 'dan',
+    'MÃ£o': 'mao',
+    'ThÃ¬n': 'thin',
+    'Ngá»': 'ngo',
+    'MÃ¹i': 'mui',
+    'ThÃ¢n': 'than',
+    'Dáº­u': 'dau',
+    'Tuáº¥t': 'tuat',
+    'Há»£i': 'hoi',
+  };
+
+  const explicitSlug = explicitSlugMap[trimmedValue];
+  if (explicitSlug) {
+    return explicitSlug;
+  }
+
+  return trimmedValue
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd')

@@ -217,6 +217,19 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
 
             <div className="absolute inset-0 z-10 pointer-events-none">{children}</div>
 
+            <button
+              className="absolute z-20 pointer-events-auto transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              onClick={() => router.push('/matchmaking')}
+              style={toSceneStyle(1390, 854, 500, 264)}
+              type="button"
+            >
+              <img
+                alt="Bắt đầu chơi"
+                className="h-full w-full object-contain"
+                src={UI_GAME_ASSETS.btnStart}
+              />
+            </button>
+
             <Link
               className="absolute z-20 block pointer-events-auto transition-transform hover:scale-[1.02]"
               href="/profile"
@@ -335,82 +348,80 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
   }
 
   return (
-    <div className="game-viewport">
-      <div className="game-bg">
-        <picture className="absolute inset-0 h-full w-full pointer-events-none select-none">
-          <source media="(min-width: 1280px)" srcSet={UI_GAME_ASSETS.mainBg} />
-          <source media="(min-width: 768px)" srcSet={UI_GAME_ASSETS.mainBgMd} />
-          <img
-            alt=""
-            className="h-full w-full object-cover"
-            src={UI_GAME_ASSETS.mainBgSm}
-          />
-        </picture>
-      </div>
+    <div className="game-viewport" style={{ background: '#091321' }}>
+      <FixedAspectScene className="relative z-10" sceneClassName="pointer-events-none">
+        <div className="relative h-full w-full">
+          <picture className="absolute inset-0 h-full w-full pointer-events-none select-none">
+            <source media="(min-width: 1280px)" srcSet={UI_GAME_ASSETS.mainBg} />
+            <source media="(min-width: 768px)" srcSet={UI_GAME_ASSETS.mainBgMd} />
+            <img alt="" className="h-full w-full object-cover" src={UI_GAME_ASSETS.mainBgSm} />
+          </picture>
 
-      <header className="game-hud">
-        <Link className="hud-avatar-frame transition-transform hover:scale-[1.02]" href="/profile">
-          <img
-            alt=""
-            className="absolute inset-0 h-full w-full object-contain"
-            src={UI_GAME_ASSETS.avatarFrame}
-          />
-          <div
-            className="absolute left-[3.3%] top-[6.7%] flex w-[23%] aspect-square items-center justify-center overflow-hidden rounded-full bg-[#f7f2e2]"
-            style={
-              profile.avatar
-                ? {
-                    backgroundImage: `url(${profile.avatar})`,
-                    backgroundPosition: 'center',
-                    backgroundSize: 'cover'
-                  }
-                : undefined
-            }
-          >
-            {!profile.avatar ? (
-              <span
-                className="moba-heading text-[#7b4b1d]"
-                style={{ fontSize: 'clamp(1.2rem, 2.6vw, 3rem)' }}
-              >
-                {avatarLetter}
-              </span>
-            ) : null}
+          <div className="absolute inset-0 z-10 pointer-events-none">
+            <main className="h-full w-full pointer-events-auto">{children}</main>
           </div>
 
-          <div className="absolute left-[30%] top-[34%] w-[54%] pr-[1%]">
-            <p
-              className="overflow-hidden break-words tracking-[0.07em] [overflow-wrap:anywhere] [word-break:break-word] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
-              style={{
-                fontFamily: "'FC Lilita One', cursive",
-                color: '#FCD65A',
-                fontSize: 'clamp(0.68rem, 1.45vw, 1.65rem)',
-                lineHeight: 1.02,
-                WebkitTextStroke: 'clamp(1px, 0.18vw, 3px) #4C1616',
-                paintOrder: 'stroke fill'
-              }}
-            >
-              {displayName}
-            </p>
-
+          <Link
+            className="absolute z-20 block pointer-events-auto transition-transform hover:scale-[1.02]"
+            href="/profile"
+            style={toSceneStyle(22, 12, 662, 178)}
+          >
+            <img alt="" className="absolute inset-0 h-full w-full object-contain" src={UI_GAME_ASSETS.avatarFrame} />
             <div
-              className="mt-[5%] inline-block rounded-full bg-[rgba(76,22,22,0.85)]"
-              style={{ padding: 'clamp(1px, 0.15vw, 2px) clamp(6px, 0.7vw, 12px)' }}
+              className="absolute left-[3.3%] top-[6.7%] flex w-[23%] aspect-square items-center justify-center overflow-hidden rounded-full bg-[#f7f2e2]"
+              style={
+                profile.avatar
+                  ? {
+                      backgroundImage: `url(${profile.avatar})`,
+                      backgroundPosition: 'center',
+                      backgroundSize: 'cover'
+                    }
+                  : undefined
+              }
             >
-              <span
+              {!profile.avatar ? (
+                <span
+                  className="moba-heading text-[#7b4b1d]"
+                  style={{ fontSize: 'clamp(1.2rem, 2.6vw, 3rem)' }}
+                >
+                  {avatarLetter}
+                </span>
+              ) : null}
+            </div>
+
+            <div className="absolute left-[30%] top-[34%] w-[54%] pr-[1%]">
+              <p
+                className="overflow-hidden break-words tracking-[0.07em] [overflow-wrap:anywhere] [word-break:break-word] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
                 style={{
                   fontFamily: "'FC Lilita One', cursive",
                   color: '#FCD65A',
-                  fontSize: 'clamp(0.45rem, 0.75vw, 0.875rem)'
+                  fontSize: 'clamp(0.68rem, 1.45vw, 1.65rem)',
+                  lineHeight: 1.02,
+                  WebkitTextStroke: 'clamp(1px, 0.18vw, 3px) #4C1616',
+                  paintOrder: 'stroke fill'
                 }}
               >
-                LEVEL {level}
-              </span>
-            </div>
-          </div>
-        </Link>
+                {displayName}
+              </p>
 
-        <div className="hud-currency-bar">
-          <div className="hud-currency-item">
+              <div
+                className="mt-[5%] inline-block rounded-full bg-[rgba(76,22,22,0.85)]"
+                style={{ padding: 'clamp(1px, 0.15vw, 2px) clamp(6px, 0.7vw, 12px)' }}
+              >
+                <span
+                  style={{
+                    fontFamily: "'FC Lilita One', cursive",
+                    color: '#FCD65A',
+                    fontSize: 'clamp(0.45rem, 0.75vw, 0.875rem)'
+                  }}
+                >
+                  LEVEL {level}
+                </span>
+              </div>
+            </div>
+          </Link>
+
+          <div className="absolute z-20" style={toSceneStyle(1050, 60, 313, 106)}>
             <img alt="Coins" className="h-full w-full object-contain" src={UI_GAME_ASSETS.coin} />
             <span
               className="moba-heading absolute right-[17%] top-[28%] uppercase tracking-[0.08em] text-[#fff8dc] [text-shadow:0_3px_0_rgba(93,52,11,0.9)]"
@@ -420,12 +431,8 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
             </span>
           </div>
 
-          <div className="hud-currency-item">
-            <img
-              alt="Diamonds"
-              className="h-full w-full object-contain"
-              src={UI_GAME_ASSETS.diamond}
-            />
+          <div className="absolute z-20" style={toSceneStyle(1400, 60, 313, 106)}>
+            <img alt="Diamonds" className="h-full w-full object-contain" src={UI_GAME_ASSETS.diamond} />
             <span
               className="moba-heading absolute right-[17%] top-[28%] uppercase tracking-[0.08em] text-[#fff8dc] [text-shadow:0_3px_0_rgba(93,52,11,0.9)]"
               style={{ fontSize: 'clamp(0.65rem, 1.45vw, 1.875rem)' }}
@@ -436,40 +443,35 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
 
           <button
             aria-label="Settings"
-            className="hud-settings-btn transition-transform hover:scale-[1.04] active:scale-[0.98]"
+            className="absolute z-20 pointer-events-auto transition-transform hover:scale-[1.04] active:scale-[0.98]"
             onClick={handleSettingsClick}
+            style={toSceneStyle(1728, 40, 150, 150)}
             type="button"
           >
-            <img
-              alt="Settings icon"
-              className="h-full w-full object-contain"
-              src={UI_GAME_ASSETS.settings}
-            />
+            <img alt="Settings icon" className="h-full w-full object-contain" src={UI_GAME_ASSETS.settings} />
           </button>
+
+          <nav
+            aria-label="Main navigation"
+            className="absolute bottom-[1.7%] left-[2.4%] z-20 flex gap-[0.55%] pointer-events-none"
+          >
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  aria-label={item.label}
+                  className={`block pointer-events-auto transition-transform hover:scale-[1.03] ${isActive ? 'scale-[1.05] brightness-110' : ''}`}
+                  href={item.href}
+                  key={item.href}
+                  style={{ width: '12%' }}
+                >
+                  <img alt={item.label} className="h-full w-full object-contain" src={item.icon} />
+                </Link>
+              );
+            })}
+          </nav>
         </div>
-      </header>
-
-      {isLobbyRoute ? (
-        <div className="absolute inset-0 z-10 pointer-events-none">{children}</div>
-      ) : (
-        <main className="game-content">{children}</main>
-      )}
-
-      <nav className="game-nav" aria-label="Main navigation">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <Link
-              aria-label={item.label}
-              className={`nav-btn ${isActive ? 'nav-btn-active' : ''}`}
-              href={item.href}
-              key={item.href}
-            >
-              <img alt={item.label} className="h-full w-full object-contain" src={item.icon} />
-            </Link>
-          );
-        })}
-      </nav>
+      </FixedAspectScene>
 
       <SettingsModal isOpen={isSettingsOpen} onClose={handleSettingsClose} />
     </div>

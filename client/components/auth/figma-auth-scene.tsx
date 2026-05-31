@@ -65,7 +65,7 @@ export const FigmaAuthScene = ({
           src="/game-ui/sign-up-and-login/Background_SignUpSignIn.svg"
         />
 
-        <div className="absolute left-1/2 top-[0.6%] z-30 w-[27.24%] -translate-x-1/2">
+        <div className="absolute left-1/2 top-[0.7%] z-30 w-[20.24%] -translate-x-1/2">
           <div className="relative aspect-[523/197]">
             <Image
               alt="Cuoc dua 12 con giap"

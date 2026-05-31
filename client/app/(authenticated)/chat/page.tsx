@@ -272,89 +272,89 @@ export default function ChatPage() {
         />
 
         <div className="panel-content">
-          <section className="space-y-4">
-            <header className="friends-header-panel animate-fade-in-up">
-              <p className="moba-heading text-xs uppercase tracking-[0.24em] text-cyan-300/90">
-                Friend Chat
-              </p>
-              <h1 className="moba-heading mt-1 text-2xl uppercase tracking-[0.12em] text-amber-100">
-                Squad Messenger
-              </h1>
-              <p className="mt-2 text-sm text-slate-300/85">
-                Chat is available only with accepted friends.
-              </p>
-            </header>
+          <section className="chat-layout-shell">
+            <aside
+              className="chat-friends-sidebar friends-panel flex min-h-0 flex-col animate-fade-in-up"
+              style={{ animationDelay: '70ms' }}
+            >
+              <h2 className="moba-heading text-xs uppercase tracking-[0.14em] text-cyan-200">
+                Friends
+              </h2>
 
-            {errorMessage ? (
-              <div className="friends-alert friends-alert-error animate-fade-in">{errorMessage}</div>
-            ) : null}
+              {isLoadingConversations ? (
+                <p className="mt-4 text-sm text-slate-300/80">Loading conversations...</p>
+              ) : errorMessage ? (
+                <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-gradient-to-br from-cyan-900/55 to-blue-900/35 p-6 text-center">
+                  <p className="text-sm text-slate-300/90">
+                    Unable to load your friend conversations right now.
+                  </p>
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-gradient-to-br from-cyan-900/55 to-blue-900/35 p-6 text-center">
+                  <p className="text-sm text-slate-300/90">
+                    You have no accepted friends to chat with yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="chat-conversation-list mt-4 max-h-[360px] space-y-2 overflow-y-auto overscroll-contain pr-1 sm:max-h-[420px]">
+                  {conversations.map((conversation) => {
+                    const isActive = conversation.friend.id === selectedFriendId;
+                    const preview = conversation.lastMessage
+                      ? `${conversation.lastMessage.isOwnMessage ? 'You: ' : ''}${conversation.lastMessage.content}`
+                      : 'No messages yet';
 
-            {successMessage ? (
-              <div className="friends-alert friends-alert-success animate-fade-in">
-                {successMessage}
-              </div>
-            ) : null}
+                    return (
+                      <button
+                        className={`w-full rounded-xl border px-3 py-3 text-left transition ${
+                          isActive
+                            ? 'border-cyan-300/70 bg-cyan-700/20 shadow-[0_0_20px_rgba(34,211,238,0.12)]'
+                            : 'border-cyan-700/30 bg-slate-900/50 hover:border-cyan-400/50'
+                        }`}
+                        key={conversation.friend.id}
+                        onClick={() => setSelectedFriendId(conversation.friend.id)}
+                        type="button"
+                      >
+                        <p className="truncate text-sm font-bold uppercase tracking-[0.08em] text-amber-100">
+                          {conversation.friend.username}
+                        </p>
+                        <p className="mt-1 truncate text-xs text-slate-300/80">{preview}</p>
+                        <p className="mt-1 text-[0.68rem] text-slate-500">
+                          {conversation.lastMessage
+                            ? formatRelativeDate(conversation.lastMessage.createdAt)
+                            : '-'}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </aside>
 
-            <div className="chat-layout-grid grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-              <aside
-                className="friends-panel flex min-h-0 flex-col animate-fade-in-up"
-                style={{ animationDelay: '70ms' }}
-              >
-                <h2 className="moba-heading text-xs uppercase tracking-[0.14em] text-cyan-200">
-                  Friends
-                </h2>
+            <div className="chat-right-column space-y-4">
+              <header className="friends-header-panel animate-fade-in-up">
+                <p className="moba-heading text-xs uppercase tracking-[0.24em] text-cyan-300/90">
+                  Friend Chat
+                </p>
+                <h1 className="moba-heading mt-1 text-2xl uppercase tracking-[0.12em] text-amber-100">
+                  Squad Messenger
+                </h1>
+                <p className="mt-2 text-sm text-slate-300/85">
+                  Chat is available only with accepted friends.
+                </p>
+              </header>
 
-                {isLoadingConversations ? (
-                  <p className="mt-4 text-sm text-slate-300/80">Loading conversations...</p>
-                ) : errorMessage ? (
-                  <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-gradient-to-br from-cyan-900/55 to-blue-900/35 p-6 text-center">
-                    <p className="text-sm text-slate-300/90">
-                      Unable to load your friend conversations right now.
-                    </p>
-                  </div>
-                ) : conversations.length === 0 ? (
-                  <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-gradient-to-br from-cyan-900/55 to-blue-900/35 p-6 text-center">
-                    <p className="text-sm text-slate-300/90">
-                      You have no accepted friends to chat with yet.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="chat-conversation-list mt-4 max-h-[360px] space-y-2 overflow-y-auto overscroll-contain pr-1 sm:max-h-[420px]">
-                    {conversations.map((conversation) => {
-                      const isActive = conversation.friend.id === selectedFriendId;
-                      const preview = conversation.lastMessage
-                        ? `${conversation.lastMessage.isOwnMessage ? 'You: ' : ''}${conversation.lastMessage.content}`
-                        : 'No messages yet';
+              {errorMessage ? (
+                <div className="friends-alert friends-alert-error animate-fade-in">{errorMessage}</div>
+              ) : null}
 
-                      return (
-                        <button
-                          className={`w-full rounded-xl border px-3 py-3 text-left transition ${
-                            isActive
-                              ? 'border-cyan-300/70 bg-cyan-700/20 shadow-[0_0_20px_rgba(34,211,238,0.12)]'
-                              : 'border-cyan-700/30 bg-slate-900/50 hover:border-cyan-400/50'
-                          }`}
-                          key={conversation.friend.id}
-                          onClick={() => setSelectedFriendId(conversation.friend.id)}
-                          type="button"
-                        >
-                          <p className="truncate text-sm font-bold uppercase tracking-[0.08em] text-amber-100">
-                            {conversation.friend.username}
-                          </p>
-                          <p className="mt-1 truncate text-xs text-slate-300/80">{preview}</p>
-                          <p className="mt-1 text-[0.68rem] text-slate-500">
-                            {conversation.lastMessage
-                              ? formatRelativeDate(conversation.lastMessage.createdAt)
-                              : '-'}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </aside>
+              {successMessage ? (
+                <div className="friends-alert friends-alert-success animate-fade-in">
+                  {successMessage}
+                </div>
+              ) : null}
 
               <div
-                className="friends-panel min-h-0 animate-fade-in-up"
+                className="chat-main-panel friends-panel min-h-0 animate-fade-in-up"
                 style={{ animationDelay: '120ms' }}
               >
                 {!selectedConversation ? (
@@ -362,7 +362,7 @@ export default function ChatPage() {
                     <p className="text-sm text-slate-300/90">Select a friend to start chatting.</p>
                   </div>
                 ) : (
-                  <div className="flex min-h-0 flex-col">
+                  <div className="flex h-full min-h-0 flex-col">
                     <div className="mb-3 flex items-center justify-between border-b border-cyan-400/15 pb-3">
                       <div>
                         <p className="text-sm font-bold uppercase tracking-[0.08em] text-amber-100">
@@ -383,7 +383,7 @@ export default function ChatPage() {
                     </div>
 
                     <div
-                      className="min-h-[240px] max-h-[360px] space-y-2 overflow-y-auto overscroll-contain rounded-xl border border-cyan-700/25 bg-slate-950/35 p-3 sm:max-h-[420px] lg:max-h-[440px]"
+                      className="chat-message-list min-h-[240px] max-h-[360px] space-y-2 overflow-y-auto overscroll-contain rounded-xl border border-cyan-700/25 bg-slate-950/35 p-3 sm:max-h-[420px] lg:max-h-[440px]"
                       ref={messageListRef}
                     >
                       {isLoadingMessages ? (
