@@ -185,6 +185,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
   const displayName = profile.username.length > 10
     ? `${profile.username.slice(0, 10)}...`
     : profile.username;
+  const avatarFrameSrc = user?.equippedFrameImageUrl ?? UI_GAME_ASSETS.avatarFrame;
 
   const handleSettingsClick = useCallback(() => {
     setIsSettingsOpen(true);
@@ -244,7 +245,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
               href="/profile"
               style={toSceneStyle(22, 12, 662, 178)}
             >
-              <img alt="" className="absolute inset-0 h-full w-full object-contain" src={UI_GAME_ASSETS.avatarFrame} />
+              <img alt="" className="absolute inset-0 h-full w-full object-contain" src={avatarFrameSrc} />
               <div
                 className="absolute left-[3.3%] top-[6.7%] flex w-[23%] aspect-square items-center justify-center overflow-hidden rounded-full bg-[#f7f2e2]"
                 style={
@@ -374,7 +375,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
             href="/profile"
             style={toSceneStyle(22, 12, 662, 178)}
           >
-            <img alt="" className="absolute inset-0 h-full w-full object-contain" src={UI_GAME_ASSETS.avatarFrame} />
+            <img alt="" className="absolute inset-0 h-full w-full object-contain" src={avatarFrameSrc} />
             <div
               className="absolute left-[3.3%] top-[6.7%] flex w-[23%] aspect-square items-center justify-center overflow-hidden rounded-full bg-[#f7f2e2]"
               style={

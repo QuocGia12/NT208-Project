@@ -18,6 +18,7 @@ type PlayerCardEntry = {
   handValue: Phaser.GameObjects.Text;
   distanceLabel: Phaser.GameObjects.Text;
   distanceValue: Phaser.GameObjects.Text;
+  zodiacBlinkTween: Phaser.Tweens.Tween | null;
 };
 
 export class PlayerInfoPanel {
@@ -52,7 +53,10 @@ export class PlayerInfoPanel {
   }
 
   update(players: PublicPlayerState[], currentPlayerId: string, teams: TeamInfo[] = []): void {
-    const sorted = [...players].sort((a, b) => a.turnIndex - b.turnIndex);
+    const sorted = [...players].sort((a, b) => {
+      const displayRank = this.getDisplayOrderRank(a) - this.getDisplayOrderRank(b);
+      return displayRank !== 0 ? displayRank : a.turnIndex - b.turnIndex;
+    });
 
     this.entries.forEach((entry, index) => {
       const player = sorted[index];
@@ -64,6 +68,7 @@ export class PlayerInfoPanel {
         entry.zodiacIcon.setVisible(false);
         entry.container.setAlpha(0.72);
         this.setEntrySelected(entry, false);
+        this.setEntryZodiacBlink(entry, false);
         return;
       }
 
@@ -79,6 +84,7 @@ export class PlayerInfoPanel {
         entry.zodiacIcon.setVisible(false);
       }
 
+      this.setEntryZodiacBlink(entry, isCurrentTurn && Boolean(iconKey));
       entry.nameText.setText(player.name);
       entry.progressValue.setText(`${player.claimedCount}/5`);
       entry.handValue.setText(`${player.handSize}`);
@@ -87,7 +93,10 @@ export class PlayerInfoPanel {
   }
 
   destroy(): void {
-    this.entries.forEach((entry) => entry.container.destroy(true));
+    this.entries.forEach((entry) => {
+      this.setEntryZodiacBlink(entry, false);
+      entry.container.destroy(true);
+    });
     this.splitLine.destroy();
     this.entries = [];
   }
@@ -199,6 +208,7 @@ export class PlayerInfoPanel {
       handValue,
       distanceLabel,
       distanceValue,
+      zodiacBlinkTween: null,
     };
   }
 
@@ -208,6 +218,30 @@ export class PlayerInfoPanel {
     entry.frame.setTexture(selected ? 'ui-player-frame-selected' : 'ui-player-frame-normal');
     entry.iconFrame.setTexture(selected ? 'ui-player-icon-selected' : 'ui-player-icon-normal');
     this.drawNamePlate(entry, selected);
+  }
+
+  private setEntryZodiacBlink(entry: PlayerCardEntry, blinking: boolean): void {
+    if (blinking) {
+      if (entry.zodiacBlinkTween) return;
+
+      entry.zodiacIcon.setAlpha(1);
+      entry.zodiacBlinkTween = this.scene.tweens.add({
+        targets: entry.zodiacIcon,
+        alpha: 0.28,
+        duration: 420,
+        ease: 'Sine.easeInOut',
+        yoyo: true,
+        repeat: -1
+      });
+      return;
+    }
+
+    if (entry.zodiacBlinkTween) {
+      entry.zodiacBlinkTween.stop();
+      entry.zodiacBlinkTween = null;
+    }
+
+    entry.zodiacIcon.setAlpha(1);
   }
 
   private drawNamePlate(entry: PlayerCardEntry, selected: boolean): void {
@@ -234,6 +268,27 @@ export class PlayerInfoPanel {
     entry.namePlate.strokeRoundedRect(plateX + 5, plateY + 4, plateWidth - 10, plateHeight - 9, 10);
   }
 
+  private getDisplayOrderRank(player: PublicPlayerState): number {
+    const teamRank = player.teamId === 'team1' ? 0 : player.teamId === 'team2' ? 1 : 2;
+    return teamRank * 10 + this.getTeamSlotRank(player);
+  }
+
+  private getTeamSlotRank(player: PublicPlayerState): number {
+    // Gameplay turn order stays T1S0 -> T2S0 -> T1S1 -> T2S1.
+    // The side panel groups teammates together: T1S0 -> T1S1 -> T2S0 -> T2S1.
+    if (player.teamId === 'team1') {
+      if (player.turnIndex === 0) return 0;
+      if (player.turnIndex === 2) return 1;
+    }
+
+    if (player.teamId === 'team2') {
+      if (player.turnIndex === 1) return 0;
+      if (player.turnIndex === 3) return 1;
+    }
+
+    return player.turnIndex;
+  }
+
   private getDistanceText(player: PublicPlayerState, players: PublicPlayerState[], teams: TeamInfo[]): string {
     const team = teams.find((item) => item.teamId === player.teamId);
     if (!team) {
@@ -247,14 +302,15 @@ export class PlayerInfoPanel {
 
     const teammate = players.find((item) => item.id === teammateId);
     if (!teammate || !player.hasSpawned || !teammate.hasSpawned) {
-      return '-';
+      return `-/${team.tetherLength}`;
     }
 
     const rawDx = Math.abs(player.position.x - teammate.position.x);
     const rawDy = Math.abs(player.position.y - teammate.position.y);
     const gapX = rawDx > 0 ? rawDx - 1 : 0;
     const gapY = rawDy > 0 ? rawDy - 1 : 0;
-    return `${Math.floor(Math.sqrt(gapX * gapX + gapY * gapY))}`;
+    const currentDistance = Math.floor(Math.sqrt(gapX * gapX + gapY * gapY));
+    return `${currentDistance}/${team.tetherLength}`;
   }
 
   private drawSplitLine(centerX: number, y: number): void {

@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -8,13 +8,20 @@ import {
   deleteAdminShopItem,
   fetchAdminShopItems,
   toggleAdminShopItemActive,
-  updateAdminShopItem
+  updateAdminShopItem,
+  uploadAdminShopImage
 } from '@/lib/api/shop';
-import type { AdminShopItem, ShopItemType, UpsertAdminShopItemPayload } from '@/lib/types/shop';
+import type {
+  AdminShopItem,
+  ShopItemType,
+  SkinType,
+  UpsertAdminShopItemPayload
+} from '@/lib/types/shop';
 import { useAuthStore } from '@/store/auth-store';
 
 type FormState = {
   type: ShopItemType;
+  skinType: SkinType;
   code: string;
   name: string;
   description: string;
@@ -22,36 +29,54 @@ type FormState = {
   priceCoins: string;
   priceGems: string;
   isActive: boolean;
-  metadata: string;
+};
+
+const itemTypes: ShopItemType[] = ['SKIN', 'ITEM'];
+const skinTypes: SkinType[] = ['FRAME'];
+
+const typeLabels: Record<ShopItemType, string> = {
+  SKIN: 'Trang phục',
+  ITEM: 'Vật phẩm'
+};
+
+const skinTypeLabels: Record<SkinType, string> = {
+  FRAME: 'Frame'
 };
 
 const createEmptyForm = (): FormState => ({
   type: 'SKIN',
+  skinType: 'FRAME',
   code: '',
   name: '',
   description: '',
   imageUrl: '',
   priceCoins: '0',
   priceGems: '0',
-  isActive: true,
-  metadata: ''
+  isActive: true
 });
 
-const itemTypes: ShopItemType[] = ['SKIN', 'ITEM', 'CARD'];
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const getSkinType = (metadata: unknown): SkinType => {
+  if (isRecord(metadata) && typeof metadata.skinType === 'string') {
+    const normalized = metadata.skinType.toUpperCase();
+    if (normalized === 'FRAME') return 'FRAME';
+  }
+
+  return 'FRAME';
+};
 
 const toFormState = (item: AdminShopItem): FormState => ({
   type: item.type,
+  skinType: item.type === 'SKIN' ? getSkinType(item.metadata) : 'FRAME',
   code: item.code,
   name: item.name,
   description: item.description ?? '',
   imageUrl: item.imageUrl ?? '',
   priceCoins: String(item.priceCoins),
   priceGems: String(item.priceGems),
-  isActive: item.isActive,
-  metadata:
-    item.metadata === null || item.metadata === undefined
-      ? ''
-      : JSON.stringify(item.metadata, null, 2)
+  isActive: item.isActive
 });
 
 const parseForm = (form: FormState): UpsertAdminShopItemPayload => {
@@ -59,30 +84,39 @@ const parseForm = (form: FormState): UpsertAdminShopItemPayload => {
   const priceGems = Number(form.priceGems);
 
   if (!Number.isInteger(priceCoins) || priceCoins < 0) {
-    throw new Error('Coin price must be a non-negative integer.');
+    throw new Error('Giá coin phải là số nguyên không âm.');
   }
 
   if (!Number.isInteger(priceGems) || priceGems < 0) {
-    throw new Error('Gem price must be a non-negative integer.');
-  }
-
-  let metadata: unknown;
-  if (form.metadata.trim().length > 0) {
-    metadata = JSON.parse(form.metadata);
+    throw new Error('Giá gem phải là số nguyên không âm.');
   }
 
   return {
     type: form.type,
+    ...(form.type === 'SKIN' ? { skinType: form.skinType } : {}),
     code: form.code.trim(),
     name: form.name.trim(),
     description: form.description.trim() || null,
     imageUrl: form.imageUrl.trim() || null,
     priceCoins,
     priceGems,
-    isActive: form.isActive,
-    ...(metadata !== undefined ? { metadata } : {})
+    isActive: form.isActive
   };
 };
+
+const readFileAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error('Không thể đọc file ảnh.'));
+    };
+    reader.onerror = () => reject(new Error('Không thể đọc file ảnh.'));
+    reader.readAsDataURL(file);
+  });
 
 export default function AdminShopPage() {
   const router = useRouter();
@@ -94,6 +128,7 @@ export default function AdminShopPage() {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -118,9 +153,9 @@ export default function AdminShopPage() {
     setErrorMessage(null);
     try {
       const response = await fetchAdminShopItems(token);
-      setItems(response.items);
+      setItems(response.items.filter((item) => item.type === 'SKIN' || item.type === 'ITEM'));
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to load admin shop.');
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể tải admin shop.');
     } finally {
       setIsLoading(false);
     }
@@ -150,19 +185,44 @@ export default function AdminShopPage() {
       if (editingItemId) {
         const response = await updateAdminShopItem(token, editingItemId, payload);
         setItems((prev) => prev.map((item) => (item.id === editingItemId ? response.item : item)));
-        setSuccessMessage(`Updated ${response.item.name}.`);
+        setSuccessMessage(`Đã cập nhật ${response.item.name}.`);
       } else {
         const response = await createAdminShopItem(token, payload);
         setItems((prev) => [response.item, ...prev]);
-        setSuccessMessage(`Created ${response.item.name}.`);
+        setSuccessMessage(`Đã tạo ${response.item.name}.`);
       }
 
       setEditingItemId(null);
       setForm(createEmptyForm());
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to save item.');
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể lưu item.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (!token) return;
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setIsUploading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      const response = await uploadAdminShopImage(token, {
+        fileName: file.name,
+        dataUrl
+      });
+      setForm((prev) => ({ ...prev, imageUrl: response.imageUrl }));
+      setSuccessMessage('Đã upload ảnh và gán vào Image URL.');
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể upload ảnh.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -181,15 +241,15 @@ export default function AdminShopPage() {
     try {
       const response = await toggleAdminShopItemActive(token, item.id, !item.isActive);
       setItems((prev) => prev.map((current) => (current.id === item.id ? response.item : current)));
-      setSuccessMessage(`${response.item.name} is now ${response.item.isActive ? 'active' : 'inactive'}.`);
+      setSuccessMessage(`${response.item.name} hiện ${response.item.isActive ? 'đang bán' : 'đã ẩn'}.`);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to toggle item.');
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể đổi trạng thái item.');
     }
   };
 
   const handleDelete = async (item: AdminShopItem) => {
     if (!token) return;
-    const confirmed = window.confirm(`Delete ${item.name}? This also removes it from inventories.`);
+    const confirmed = window.confirm(`Xóa ${item.name}? Item này cũng sẽ bị xóa khỏi inventory.`);
     if (!confirmed) return;
 
     setErrorMessage(null);
@@ -202,16 +262,16 @@ export default function AdminShopPage() {
         setEditingItemId(null);
         setForm(createEmptyForm());
       }
-      setSuccessMessage(`Deleted ${item.name}.`);
+      setSuccessMessage(`Đã xóa ${item.name}.`);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to delete item.');
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể xóa item.');
     }
   };
 
   if (!token || !isAdmin) {
     return (
       <div className="flex h-full w-full items-center justify-center px-6 text-center text-amber-100">
-        Redirecting...
+        Đang chuyển hướng...
       </div>
     );
   }
@@ -225,10 +285,10 @@ export default function AdminShopPage() {
               Admin
             </p>
             <h1 className="moba-heading text-3xl uppercase tracking-[0.12em] text-amber-100">
-              Shop Items
+              Quản lý shop
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-amber-100/75">
-              Tạo trang phục, vật phẩm hoặc card bằng imageUrl. Item inactive sẽ không hiện trong shop public.
+              Tạo trang phục và vật phẩm cho cửa hàng. Trang phục hiện chỉ hỗ trợ Frame, dùng ảnh từ URL hoặc upload file.
             </p>
           </div>
 
@@ -253,7 +313,7 @@ export default function AdminShopPage() {
           onSubmit={handleSubmit}
         >
           <label className="space-y-1 text-sm font-bold uppercase tracking-[0.1em] text-amber-100">
-            Type
+            Loại item
             <select
               className="w-full rounded-xl border border-amber-500/30 bg-[#071c0d] px-3 py-3 text-amber-50 outline-none"
               value={form.type}
@@ -263,11 +323,30 @@ export default function AdminShopPage() {
             >
               {itemTypes.map((type) => (
                 <option key={type} value={type}>
-                  {type}
+                  {typeLabels[type]}
                 </option>
               ))}
             </select>
           </label>
+
+          {form.type === 'SKIN' ? (
+            <label className="space-y-1 text-sm font-bold uppercase tracking-[0.1em] text-amber-100">
+              Loại trang phục
+              <select
+                className="w-full rounded-xl border border-amber-500/30 bg-[#071c0d] px-3 py-3 text-amber-50 outline-none"
+                value={form.skinType}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, skinType: event.target.value as SkinType }))
+                }
+              >
+                {skinTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {skinTypeLabels[type]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
 
           <label className="space-y-1 text-sm font-bold uppercase tracking-[0.1em] text-amber-100">
             Code
@@ -275,34 +354,58 @@ export default function AdminShopPage() {
               className="w-full rounded-xl border border-amber-500/30 bg-[#071c0d] px-3 py-3 text-amber-50 outline-none"
               value={form.code}
               onChange={(event) => setForm((prev) => ({ ...prev, code: event.target.value }))}
-              placeholder="skin_lunar_cat"
+              placeholder="frame_lunar_cat"
               required
             />
           </label>
 
           <label className="space-y-1 text-sm font-bold uppercase tracking-[0.1em] text-amber-100">
-            Name
+            Tên
             <input
               className="w-full rounded-xl border border-amber-500/30 bg-[#071c0d] px-3 py-3 text-amber-50 outline-none"
               value={form.name}
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-              placeholder="Lunar Cat Skin"
+              placeholder="Frame mèo thần tài"
               required
             />
           </label>
 
-          <label className="space-y-1 text-sm font-bold uppercase tracking-[0.1em] text-amber-100">
-            Image URL
-            <input
-              className="w-full rounded-xl border border-amber-500/30 bg-[#071c0d] px-3 py-3 text-amber-50 outline-none"
-              value={form.imageUrl}
-              onChange={(event) => setForm((prev) => ({ ...prev, imageUrl: event.target.value }))}
-              placeholder="https://..."
-            />
+          <label className="space-y-1 text-sm font-bold uppercase tracking-[0.1em] text-amber-100 lg:col-span-2">
+            Image URL hoặc upload ảnh
+            <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+              <input
+                className="w-full rounded-xl border border-amber-500/30 bg-[#071c0d] px-3 py-3 text-amber-50 outline-none"
+                value={form.imageUrl}
+                onChange={(event) => setForm((prev) => ({ ...prev, imageUrl: event.target.value }))}
+                placeholder="https://... hoặc upload file bên dưới"
+              />
+              <label className="friends-action-button friends-action-button-muted flex cursor-pointer items-center justify-center">
+                {isUploading ? 'Đang upload...' : 'Upload ảnh'}
+                <input
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                  disabled={isUploading}
+                  onChange={handleUpload}
+                  type="file"
+                />
+              </label>
+            </div>
           </label>
 
+          {form.imageUrl ? (
+            <div className="lg:col-span-2">
+              <p className="mb-2 text-sm font-bold uppercase tracking-[0.1em] text-amber-100">
+                Preview
+              </p>
+              <div
+                className="h-28 w-28 rounded-2xl border border-amber-500/30 bg-contain bg-center bg-no-repeat"
+                style={{ backgroundImage: `url(${form.imageUrl})` }}
+              />
+            </div>
+          ) : null}
+
           <label className="space-y-1 text-sm font-bold uppercase tracking-[0.1em] text-amber-100">
-            Price Coins
+            Giá Coins
             <input
               className="w-full rounded-xl border border-amber-500/30 bg-[#071c0d] px-3 py-3 text-amber-50 outline-none"
               min={0}
@@ -314,7 +417,7 @@ export default function AdminShopPage() {
           </label>
 
           <label className="space-y-1 text-sm font-bold uppercase tracking-[0.1em] text-amber-100">
-            Price Gems
+            Giá Gems
             <input
               className="w-full rounded-xl border border-amber-500/30 bg-[#071c0d] px-3 py-3 text-amber-50 outline-none"
               min={0}
@@ -326,21 +429,11 @@ export default function AdminShopPage() {
           </label>
 
           <label className="space-y-1 text-sm font-bold uppercase tracking-[0.1em] text-amber-100 lg:col-span-2">
-            Description
+            Mô tả
             <textarea
               className="min-h-24 w-full rounded-xl border border-amber-500/30 bg-[#071c0d] px-3 py-3 text-amber-50 outline-none"
               value={form.description}
               onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
-            />
-          </label>
-
-          <label className="space-y-1 text-sm font-bold uppercase tracking-[0.1em] text-amber-100 lg:col-span-2">
-            Metadata JSON
-            <textarea
-              className="min-h-28 w-full rounded-xl border border-amber-500/30 bg-[#071c0d] px-3 py-3 font-mono text-xs text-amber-50 outline-none"
-              value={form.metadata}
-              onChange={(event) => setForm((prev) => ({ ...prev, metadata: event.target.value }))}
-              placeholder='{"rarity":"RARE"}'
             />
           </label>
 
@@ -351,7 +444,7 @@ export default function AdminShopPage() {
                 onChange={(event) => setForm((prev) => ({ ...prev, isActive: event.target.checked }))}
                 type="checkbox"
               />
-              Active
+              Đang bán
             </label>
 
             <div className="flex flex-wrap gap-3">
@@ -367,7 +460,7 @@ export default function AdminShopPage() {
                   Hủy sửa
                 </button>
               ) : null}
-              <button className="friends-action-button" disabled={isSaving} type="submit">
+              <button className="friends-action-button" disabled={isSaving || isUploading} type="submit">
                 {isSaving ? 'Đang lưu...' : editingItemId ? 'Cập nhật item' : 'Tạo item'}
               </button>
             </div>
@@ -377,7 +470,7 @@ export default function AdminShopPage() {
         <section className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="moba-heading text-2xl uppercase tracking-[0.12em] text-amber-100">
-              Existing Items
+              Item hiện có
             </h2>
             <button
               className="friends-action-button friends-action-button-muted"
@@ -392,11 +485,11 @@ export default function AdminShopPage() {
           {groupedItems.map((group) => (
             <div className="space-y-3" key={group.type}>
               <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-amber-300">
-                {group.type}
+                {typeLabels[group.type]}
               </h3>
               {group.items.length === 0 ? (
                 <p className="rounded-2xl border border-amber-500/20 bg-black/20 p-4 text-sm text-amber-100/70">
-                  Chưa có item loại {group.type}.
+                  Chưa có {typeLabels[group.type].toLowerCase()}.
                 </p>
               ) : (
                 <div className="grid gap-3 md:grid-cols-2">
@@ -407,7 +500,7 @@ export default function AdminShopPage() {
                     >
                       <div className="flex gap-4">
                         <div
-                          className="h-20 w-20 flex-shrink-0 rounded-2xl border border-amber-500/30 bg-cover bg-center bg-no-repeat"
+                          className="h-20 w-20 flex-shrink-0 rounded-2xl border border-amber-500/30 bg-contain bg-center bg-no-repeat"
                           style={{
                             backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : undefined
                           }}
@@ -433,8 +526,13 @@ export default function AdminShopPage() {
                             </span>
                           </div>
                           <p className="mt-1 text-xs text-amber-100/65">{item.code}</p>
+                          {item.type === 'SKIN' ? (
+                            <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-cyan-200">
+                              {skinTypeLabels[getSkinType(item.metadata)]}
+                            </p>
+                          ) : null}
                           <p className="mt-2 line-clamp-2 text-sm text-amber-100/75">
-                            {item.description ?? 'No description.'}
+                            {item.description ?? 'Không có mô tả.'}
                           </p>
                           <p className="mt-2 text-sm font-bold text-amber-200">
                             {item.priceCoins} Coins | {item.priceGems} Gems

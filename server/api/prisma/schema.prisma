@@ -39,16 +39,20 @@ model User {
   elo          Int             @default(1000)
   coins        Int             @default(0)
   gems         Int             @default(0)
+  equippedFrameItemId String?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
   friendshipsInitiated Friendship[]   @relation("FriendshipInitiator")
   friendshipsReceived  Friendship[]   @relation("FriendshipReceiver")
   inventoryItems       UserInventory[]
+  equippedFrameItem    ShopItem?      @relation("EquippedFrame", fields: [equippedFrameItemId], references: [id], onDelete: SetNull)
   wonMatches           MatchHistory[] @relation("MatchWinner")
   matchParticipations  MatchParticipant[]
   sentMessages         ChatMessage[]  @relation("ChatMessageSender")
   receivedMessages     ChatMessage[]  @relation("ChatMessageReceiver")
+
+  @@index([equippedFrameItemId])
 }
 
 model Friendship {
@@ -96,6 +100,7 @@ model ShopItem {
   updatedAt   DateTime     @updatedAt
 
   inventories UserInventory[]
+  equippedByUsers User[] @relation("EquippedFrame")
 
   @@index([type, isActive])
 }

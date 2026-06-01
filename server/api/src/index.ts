@@ -5,6 +5,7 @@ dotenv.config();
 import cors from 'cors';
 import express from 'express';
 import { createServer } from 'http';
+import path from 'path';
 import adminShopRouter from './routes/admin-shop.routes';
 import authRouter from './routes/auth.routes';
 import chatRouter from './routes/chat.routes';
@@ -25,7 +26,8 @@ app.use(
     origin: allowedOrigins
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: '8mb' }));
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/friends', friendRouter);

@@ -152,7 +152,11 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
               src="/game-ui/btn_GuideBook.svg"
               style={guidebookStyle(17, 14, 100, 66.39)}
             />
-            <GuideBookModal isOpen={isGuideBookOpen} onClose={() => setIsGuideBookOpen(false)} />
+            <GuideBookModal
+              isOpen={isGuideBookOpen}
+              onClose={() => setIsGuideBookOpen(false)}
+              useFixedScene
+            />
           </div>
         ) : (
           <div className="game-route-loading">

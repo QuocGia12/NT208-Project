@@ -6,6 +6,7 @@ import {
   AuthenticatedRequest,
   requireAuth
 } from '../middleware/auth.middleware';
+import { toSafeUser } from '../utils/safe-user';
 
 const userRouter = Router();
 const MIN_PASSWORD_LENGTH = 6;
@@ -217,18 +218,16 @@ userRouter.patch('/me/avatar', requireAuth, async (req, res) => {
       data: {
         avatar: normalizedAvatar.length > 0 ? normalizedAvatar : null
       },
-      select: {
-        id: true,
-        username: true,
-        avatar: true,
-        elo: true,
-        coins: true,
-        gems: true,
-        role: true
+      include: {
+        equippedFrameItem: {
+          select: {
+            imageUrl: true
+          }
+        }
       }
     });
 
-    return res.status(200).json({ user: updatedUser });
+    return res.status(200).json({ user: toSafeUser(updatedUser) });
   } catch (error) {
     console.error('Update avatar error:', error);
     return res.status(500).json({ error: 'Internal server error.' });

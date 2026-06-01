@@ -93,7 +93,14 @@ authRouter.post('/login', async (req, res) => {
     const normalizedUsername = normalizeUsername(username);
 
     const user = await prisma.user.findUnique({
-      where: { username: normalizedUsername }
+      where: { username: normalizedUsername },
+      include: {
+        equippedFrameItem: {
+          select: {
+            imageUrl: true
+          }
+        }
+      }
     });
 
     if (!user) {

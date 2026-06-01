@@ -1,20 +1,18 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { buyShopItem, fetchShopItems } from '@/lib/api/shop';
+import { applyShopItem, buyShopItem, fetchShopItems } from '@/lib/api/shop';
 import type { ShopItem, ShopItemType } from '@/lib/types/shop';
 import { useAuthStore } from '@/store/auth-store';
 
 const itemCardClass: Record<ShopItemType, string> = {
-  CARD: 'shop-card-epic',
   SKIN: 'shop-card-rare',
   ITEM: 'shop-card-common'
 };
 
 const itemBadgeClass: Record<ShopItemType, string> = {
-  CARD: 'rarity-epic',
   SKIN: 'rarity-rare',
   ITEM: 'rarity-common'
 };
@@ -23,6 +21,22 @@ const tabToType = {
   'trang-phuc': 'SKIN',
   'vat-pham': 'ITEM'
 } as const;
+
+const typeLabels: Record<ShopItemType, string> = {
+  SKIN: 'Trang phục',
+  ITEM: 'Vật phẩm'
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const getSkinTypeLabel = (metadata: unknown) => {
+  if (isRecord(metadata) && typeof metadata.skinType === 'string') {
+    return metadata.skinType.toUpperCase() === 'FRAME' ? 'FRAME' : metadata.skinType.toUpperCase();
+  }
+
+  return 'FRAME';
+};
 
 const sortItems = (items: ShopItem[]) =>
   [...items].sort((a, b) => {
@@ -43,7 +57,7 @@ export default function ShopPage() {
   const [items, setItems] = useState<ShopItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [buyingItemId, setBuyingItemId] = useState<string | null>(null);
+  const [processingItemId, setProcessingItemId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -62,7 +76,7 @@ export default function ShopPage() {
 
     try {
       const response = await fetchShopItems(token);
-      setItems(sortItems(response.items));
+      setItems(sortItems(response.items.filter((item) => item.type === 'SKIN' || item.type === 'ITEM')));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Không thể tải cửa hàng.');
     } finally {
@@ -92,7 +106,7 @@ export default function ShopPage() {
     if (!token || !user) return;
     setErrorMessage(null);
     setSuccessMessage(null);
-    setBuyingItemId(item.id);
+    setProcessingItemId(item.id);
 
     try {
       const response = await buyShopItem(token, item.id);
@@ -105,12 +119,38 @@ export default function ShopPage() {
         )
       );
       setSuccessMessage(
-        `Đã mua ${response.purchase.itemName}. Bạn đang sở hữu ${response.purchase.ownedQuantity}.`
+        response.purchase.ownedQuantity > item.ownedQuantity
+          ? `Đã mua ${response.purchase.itemName}.`
+          : `${response.purchase.itemName} đã có trong túi đồ của bạn.`
       );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Không thể mua vật phẩm.');
     } finally {
-      setBuyingItemId(null);
+      setProcessingItemId(null);
+    }
+  };
+
+  const handleApply = async (item: ShopItem) => {
+    if (!token || item.type !== 'SKIN') return;
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setProcessingItemId(item.id);
+
+    try {
+      const response = await applyShopItem(token, item.id);
+      updateUser(response.user);
+      setItems((prev) =>
+        prev.map((current) =>
+          current.type === 'SKIN'
+            ? { ...current, isApplied: current.id === item.id }
+            : current
+        )
+      );
+      setSuccessMessage(`Đã dùng frame ${item.name}.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể dùng frame này.');
+    } finally {
+      setProcessingItemId(null);
     }
   };
 
@@ -155,8 +195,7 @@ export default function ShopPage() {
               {tabTitle}
             </h1>
             <p className="mt-2 text-sm text-slate-300/85">
-              Mua trang phục và vật phẩm bằng Coins hoặc Gems. Phiên bản này lưu item vào inventory,
-              chưa ảnh hưởng trực tiếp tới gameplay.
+              Mua trang phục và vật phẩm bằng Coins hoặc Gems. Frame đã mua có thể Apply để đổi khung avatar.
             </p>
             <div className="shop-balance-chip mt-4">
               <span className="shop-currency-coin">Coins</span>
@@ -200,7 +239,9 @@ export default function ShopPage() {
                 const canAfford = Boolean(
                   user && user.coins >= item.priceCoins && user.gems >= item.priceGems
                 );
-                const isBuying = buyingItemId === item.id;
+                const isProcessing = processingItemId === item.id;
+                const isOwned = item.ownedQuantity > 0;
+                const canApply = item.type === 'SKIN' && isOwned && !item.isApplied;
 
                 return (
                   <article
@@ -230,7 +271,7 @@ export default function ShopPage() {
                               {item.name}
                             </h2>
                             <span className={`rarity-badge ${itemBadgeClass[item.type]}`}>
-                              {item.type}
+                              {item.type === 'SKIN' ? getSkinTypeLabel(item.metadata) : typeLabels[item.type]}
                             </span>
                           </div>
                           <p className="mt-2 min-h-[2.8rem] text-xs leading-relaxed text-slate-300/88">
@@ -241,16 +282,32 @@ export default function ShopPage() {
                             <span className="shop-price-gem">{item.priceGems} Gems</span>
                             <span className="shop-owned-tag">Owned x{item.ownedQuantity}</span>
                           </div>
-                          <button
-                            className={`shop-buy-button ${
-                              canAfford ? 'shop-buy-button-active' : 'shop-buy-button-disabled'
-                            }`}
-                            disabled={isBuying || !canAfford}
-                            onClick={() => handleBuy(item)}
-                            type="button"
-                          >
-                            {isBuying ? 'Đang mua...' : canAfford ? 'Mua' : 'Không đủ tiền'}
-                          </button>
+
+                          {item.type === 'SKIN' && item.isApplied ? (
+                            <button className="shop-buy-button shop-buy-button-disabled" disabled type="button">
+                              Đang dùng
+                            </button>
+                          ) : canApply ? (
+                            <button
+                              className="shop-buy-button shop-buy-button-active"
+                              disabled={isProcessing}
+                              onClick={() => handleApply(item)}
+                              type="button"
+                            >
+                              {isProcessing ? 'Đang apply...' : 'Apply'}
+                            </button>
+                          ) : (
+                            <button
+                              className={`shop-buy-button ${
+                                canAfford ? 'shop-buy-button-active' : 'shop-buy-button-disabled'
+                              }`}
+                              disabled={isProcessing || !canAfford}
+                              onClick={() => handleBuy(item)}
+                              type="button"
+                            >
+                              {isProcessing ? 'Đang mua...' : canAfford ? 'Mua' : 'Không đủ tiền'}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

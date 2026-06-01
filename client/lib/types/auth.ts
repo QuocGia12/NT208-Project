@@ -8,6 +8,8 @@ export type AuthUser = {
   coins: number;
   gems: number;
   role: UserRole;
+  equippedFrameItemId: string | null;
+  equippedFrameImageUrl: string | null;
 };
 
 export type RegisterPayload = {

@@ -1,6 +1,7 @@
 import type { AuthUser } from '@/lib/types/auth';
 
-export type ShopItemType = 'CARD' | 'SKIN' | 'ITEM';
+export type ShopItemType = 'SKIN' | 'ITEM';
+export type SkinType = 'FRAME';
 
 export type ShopItem = {
   id: string;
@@ -14,6 +15,7 @@ export type ShopItem = {
   isActive: boolean;
   metadata: unknown;
   ownedQuantity: number;
+  isApplied?: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -71,6 +73,7 @@ export type AdminShopItemsResponse = {
 
 export type UpsertAdminShopItemPayload = {
   type: ShopItemType;
+  skinType?: SkinType;
   code: string;
   name: string;
   description?: string | null;
@@ -83,4 +86,14 @@ export type UpsertAdminShopItemPayload = {
 
 export type AdminShopItemResponse = {
   item: AdminShopItem;
+};
+
+export type ApplyShopItemResponse = {
+  message: string;
+  user: AuthUser;
+  item: AdminShopItem;
+};
+
+export type AdminShopUploadResponse = {
+  imageUrl: string;
 };

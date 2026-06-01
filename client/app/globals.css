@@ -2494,17 +2494,18 @@ body {
   }
 
   .shop-card {
-    perspective: 1200px;
+    position: relative;
   }
 
   .shop-card-tilt {
     border-radius: 1rem;
-    transform-style: preserve-3d;
-    transition: transform 0.26s ease;
+    transition:
+      filter 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .shop-card:hover .shop-card-tilt {
-    transform: rotateX(4deg) rotateY(-4deg) translateY(-3px);
+    filter: brightness(1.04) saturate(1.04);
   }
 
   .shop-card-face {
@@ -2625,7 +2626,6 @@ body {
     min-height: 2.2rem;
     text-transform: uppercase;
     transition:
-      transform 0.16s ease,
       box-shadow 0.2s ease,
       opacity 0.18s ease;
     width: 100%;
@@ -2646,7 +2646,6 @@ body {
   }
 
   .shop-buy-button-active:hover:not(:disabled) {
-    transform: translateY(-1px);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.52),
       0 0 16px rgba(250, 204, 21, 0.25);

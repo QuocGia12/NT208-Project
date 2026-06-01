@@ -1,6 +1,8 @@
 import type {
+  AdminShopUploadResponse,
   AdminShopItemResponse,
   AdminShopItemsResponse,
+  ApplyShopItemResponse,
   BuyCardResponse,
   BuyShopItemResponse,
   ShopCardsResponse,
@@ -60,6 +62,15 @@ export const buyShopItem = async (
     body: JSON.stringify({ itemId })
   });
 
+export const applyShopItem = async (
+  token: string,
+  itemId: string
+): Promise<ApplyShopItemResponse> =>
+  requestJson<ApplyShopItemResponse>(token, '/api/shop/apply', {
+    method: 'POST',
+    body: JSON.stringify({ itemId })
+  });
+
 export const buyShopCard = async (
   token: string,
   cardId: string
@@ -77,6 +88,18 @@ export const createAdminShopItem = async (
   payload: UpsertAdminShopItemPayload
 ): Promise<AdminShopItemResponse> =>
   requestJson<AdminShopItemResponse>(token, '/api/admin/shop/items', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+export const uploadAdminShopImage = async (
+  token: string,
+  payload: {
+    fileName: string;
+    dataUrl: string;
+  }
+): Promise<AdminShopUploadResponse> =>
+  requestJson<AdminShopUploadResponse>(token, '/api/admin/shop/upload', {
     method: 'POST',
     body: JSON.stringify(payload)
   });
