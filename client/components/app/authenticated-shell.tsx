@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -233,7 +233,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
               type="button"
             >
               <img
-                alt="Bắt đầu chơi"
+                alt="B?t d?u choi"
                 className="h-full w-full object-contain"
                 src={UI_GAME_ASSETS.btnStart}
               />
@@ -271,7 +271,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
                 <p
                   className="overflow-hidden break-words tracking-[0.07em] [overflow-wrap:anywhere] [word-break:break-word] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
                   style={{
-                    fontFamily: "'FC Lilita One', cursive",
+                    fontFamily: 'var(--font-lilita-one), cursive',
                     color: '#FCD65A',
                     fontSize: 'clamp(0.68rem, 1.45vw, 1.65rem)',
                     lineHeight: 1.02,
@@ -288,7 +288,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
                 >
                   <span
                     style={{
-                      fontFamily: "'FC Lilita One', cursive",
+                      fontFamily: 'var(--font-lilita-one), cursive',
                       color: '#FCD65A',
                       fontSize: 'clamp(0.45rem, 0.75vw, 0.875rem)'
                     }}
@@ -401,7 +401,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
               <p
                 className="overflow-hidden break-words tracking-[0.07em] [overflow-wrap:anywhere] [word-break:break-word] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
                 style={{
-                  fontFamily: "'FC Lilita One', cursive",
+                  fontFamily: 'var(--font-lilita-one), cursive',
                   color: '#FCD65A',
                   fontSize: 'clamp(0.68rem, 1.45vw, 1.65rem)',
                   lineHeight: 1.02,
@@ -418,7 +418,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
               >
                 <span
                   style={{
-                    fontFamily: "'FC Lilita One', cursive",
+                    fontFamily: 'var(--font-lilita-one), cursive',
                     color: '#FCD65A',
                     fontSize: 'clamp(0.45rem, 0.75vw, 0.875rem)'
                   }}
@@ -485,3 +485,4 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
     </div>
   );
 };
+

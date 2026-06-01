@@ -1,12 +1,7 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=FC+Lilita+One&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@100..800&display=swap');
 :root {
   color-scheme: dark;
   /* Farm/Market Theme Colors */
@@ -50,7 +45,7 @@
 
 @layer components {
   .tab-label {
-    font-family: 'Baloo 2', 'Be Vietnam Pro', cursive;
+    font-family: var(--font-baloo-2), var(--font-be-vietnam-pro), cursive;
     color: #FCD65A;
     -webkit-text-stroke: 4px #4C1616;
     paint-order: stroke fill;
@@ -1083,7 +1078,7 @@ body {
   }
 
   .moba-heading {
-    font-family: 'Baloo 2', 'Trebuchet MS', 'Impact', sans-serif;
+    font-family: var(--font-baloo-2), 'Trebuchet MS', 'Impact', sans-serif;
   }
 
   .moba-input:focus {
@@ -1450,7 +1445,7 @@ body {
     transform: translateY(-1px);
   }
 
-  /* â”€â”€â”€ Profile Page â”€â”€â”€ */
+  /* ─── Profile Page ─── */
 
   .profile-hero {
     background: linear-gradient(
@@ -1551,7 +1546,7 @@ body {
   }
 
   .profile-stat-value {
-    font-family: 'Baloo 2', 'Trebuchet MS', 'Impact', sans-serif;
+    font-family: var(--font-baloo-2), 'Trebuchet MS', 'Impact', sans-serif;
     font-size: 1.7rem;
     font-weight: 700;
     background: linear-gradient(180deg, #ffed4e 0%, #ffd700 52%, #f4b73b 100%);
@@ -1562,7 +1557,7 @@ body {
   }
 
   .profile-section-heading {
-    font-family: 'Baloo 2', 'Trebuchet MS', 'Impact', sans-serif;
+    font-family: var(--font-baloo-2), 'Trebuchet MS', 'Impact', sans-serif;
     font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: 0.22em;
@@ -1584,7 +1579,7 @@ body {
     );
   }
 
-  /* â”€â”€â”€ Inventory Grid â”€â”€â”€ */
+  /* ─── Inventory Grid ─── */
 
   .inventory-card {
     background: linear-gradient(
@@ -1668,7 +1663,7 @@ body {
     box-shadow: 0 0 8px rgba(255, 215, 0, 0.22);
   }
 
-  /* â”€â”€â”€ Settings Modal â”€â”€â”€ */
+  /* ─── Settings Modal ─── */
 
   .settings-modal-layer {
     align-items: center;
@@ -1893,7 +1888,7 @@ body {
     transform: translateX(calc(2.85rem - 1.6rem));
   }
 
-  /* â”€â”€â”€ Rank Badges â”€â”€â”€ */
+  /* ─── Rank Badges ─── */
 
   .rank-emblem {
     --rank-bg-top: #f6ca6f;
@@ -2190,7 +2185,7 @@ body {
     color: #fed7aa;
   }
 
-  /* â”€â”€â”€ Win Rate Bar â”€â”€â”€ */
+  /* ─── Win Rate Bar ─── */
 
   .winrate-bar-track {
     background: rgba(212, 247, 193, 0.6);
@@ -2209,7 +2204,7 @@ body {
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* â”€â”€â”€ Empty State â”€â”€â”€ */
+  /* ─── Empty State ─── */
 
   .empty-state {
     border: 1px dashed rgba(244, 183, 59, 0.7);
@@ -2220,7 +2215,7 @@ body {
     backdrop-filter: blur(8px);
   }
 
-  /* â”€â”€â”€ Friends Page â”€â”€â”€ */
+  /* ─── Friends Page ─── */
 
   .friends-header-panel {
     border: 1px solid rgba(244, 183, 59, 0.24);
@@ -2449,7 +2444,7 @@ body {
     box-shadow: 0 0 8px rgba(100, 116, 139, 0.3);
   }
 
-  /* â”€â”€â”€ Shop Page â”€â”€â”€ */
+  /* ─── Shop Page ─── */
 
   .shop-header-panel {
     border: 1px solid rgba(244, 183, 59, 0.24);
@@ -2663,7 +2658,7 @@ body {
     color: #cbd5e1;
   }
 
-  /* â”€â”€â”€ Leaderboard Page â”€â”€â”€ */
+  /* ─── Leaderboard Page ─── */
 
   .leaderboard-header-panel {
     border: 1px solid rgba(244, 183, 59, 0.24);
@@ -2925,7 +2920,7 @@ body {
       min-width: 100%;
     }
   }
-  /* â”€â”€â”€ Lobby Matchmaking â”€â”€â”€ */
+  /* ─── Lobby Matchmaking ─── */
 
   .lobby-matchmaking-shell {
     align-items: center;
@@ -2992,7 +2987,7 @@ body {
       0 0 34px rgba(244, 183, 59, 0.28);
     color: #041018;
     cursor: pointer;
-    font-family: 'Baloo 2', 'Trebuchet MS', 'Impact', sans-serif;
+    font-family: var(--font-baloo-2), 'Trebuchet MS', 'Impact', sans-serif;
     font-size: clamp(1.35rem, 4vw, 2.25rem);
     font-weight: 900;
     letter-spacing: 0.15em;
@@ -3047,7 +3042,7 @@ body {
 
   .lobby-queue-timer {
     color: rgba(212, 165, 116, 0.86);
-    font-family: 'Baloo 2', 'Trebuchet MS', 'Impact', sans-serif;
+    font-family: var(--font-baloo-2), 'Trebuchet MS', 'Impact', sans-serif;
     font-size: 1rem;
     letter-spacing: 0.12em;
     margin: 0.45rem 0 0;
@@ -3083,7 +3078,7 @@ body {
     }
   }
 
-  /* â”€â”€â”€ Game Route / Phaser Shell â”€â”€â”€ */
+  /* ─── Game Route / Phaser Shell ─── */
 
   .game-route-shell {
     min-height: 100%;
@@ -3170,7 +3165,7 @@ body {
   }
 }
 
-/* â”€â”€â”€ Animations â”€â”€â”€ */
+/* ─── Animations ─── */
 
 @keyframes fadeInUp {
   from {
@@ -3294,7 +3289,7 @@ body {
   border: 1px solid rgba(244, 183, 59, 0.38);
   color: #fff8dc;
   cursor: pointer;
-  font-family: 'Baloo 2', 'Trebuchet MS', sans-serif;
+  font-family: var(--font-baloo-2), 'Trebuchet MS', sans-serif;
   font-size: clamp(0.95rem, 1.15vw, 1.15rem);
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -3675,7 +3670,7 @@ button.party-slot-empty:hover:not(:disabled) {
   background: linear-gradient(180deg, #ffed4e 0%, #f4b73b 48%, #8b6914 100%);
   color: #1a3b0a;
   cursor: pointer;
-  font-family: 'Baloo 2', 'Trebuchet MS', sans-serif;
+  font-family: var(--font-baloo-2), 'Trebuchet MS', sans-serif;
   font-size: clamp(0.95rem, 1.15vw, 1.15rem);
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -3690,6 +3685,10 @@ button.party-slot-empty:hover:not(:disabled) {
 .game-route-back-btn:hover {
   filter: brightness(1.06);
   transform: translateY(-1px);
+}
+
+.game-route-mobile-back-btn {
+  display: none;
 }
 
 .game-route-meta {
@@ -3737,23 +3736,43 @@ button.party-slot-empty:hover:not(:disabled) {
   padding: 1.25rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   .phaser-room-shell {
-    padding: 0.35rem;
+    grid-template-rows: minmax(0, 1fr);
+    gap: 0;
+    padding: 0.2rem;
   }
 
   .game-route-topbar {
-    align-items: stretch;
-    flex-direction: column;
+    display: none;
   }
 
-  .game-route-back-btn {
-    width: 100%;
+  .phaser-canvas-frame {
+    height: 100%;
+    border-radius: 0.45rem;
   }
 
-  .game-route-meta {
+  .game-route-mobile-back-btn {
+    position: absolute;
+    right: 0.45rem;
+    top: 0.45rem;
+    z-index: 40;
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
     justify-content: center;
-    text-align: center;
+    border: 1px solid rgba(244, 183, 59, 0.65);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 237, 78, 0.96) 0%, rgba(244, 183, 59, 0.94) 52%, rgba(139, 105, 20, 0.96) 100%);
+    color: #123005;
+    cursor: pointer;
+    font-family: var(--font-baloo-2), 'Trebuchet MS', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    padding: 0.32rem 0.65rem;
+    text-transform: uppercase;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
   }
 }
 
@@ -4216,5 +4235,49 @@ button.party-slot-empty:hover:not(:disabled) {
   }
 }
 
+/* Settings mobile tab offsets.
+   Manual tuning point:
+   - AUDIO:   --settings-mobile-audio-button-x/y
+   - ACCOUNT: --settings-mobile-account-button-x/y
+   - Use --settings-mobile-*-label-x/y only for tiny text-only corrections. */
+@media (max-width: 1023px) {
+  .panel-container-settings {
+    --settings-mobile-audio-button-x: 0rem;
+    --settings-mobile-audio-button-y:-0.5rem;
+    --settings-mobile-account-button-x: 0rem;
+    --settings-mobile-account-button-y: -1.5rem;
+    --settings-mobile-audio-label-x: 0rem;
+    --settings-mobile-audio-label-y: 0rem;
+    --settings-mobile-account-label-x: 0rem;
+    --settings-mobile-account-label-y: 0rem;
+  }
 
-@import url('https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@400;600;700;800&display=swap');
+  .panel-container-settings .panel-tab:nth-child(1) {
+    left: var(--settings-mobile-audio-button-x);
+    top: var(--settings-mobile-audio-button-y);
+  }
+
+  .panel-container-settings .panel-tab:nth-child(2) {
+    left: var(--settings-mobile-account-button-x);
+    top: var(--settings-mobile-account-button-y);
+  }
+
+  .panel-container-settings .panel-tab .tab-label {
+    display: inline-block;
+    position: relative;
+  }
+
+  .panel-container-settings .panel-tab:nth-child(1) .tab-label {
+    left: var(--settings-mobile-audio-label-x);
+    top: var(--settings-mobile-audio-label-y);
+  }
+
+  .panel-container-settings .panel-tab:nth-child(2) .tab-label {
+    left: var(--settings-mobile-account-label-x);
+    top: var(--settings-mobile-account-label-y);
+  }
+}
+
+
+
+
