@@ -24,8 +24,7 @@ type AuthenticatedShellProps = {
 
 const UI_GAME_ASSETS = {
   mainBg: '/images/ui-game/main-bg.png',
-  mainBgMd: '/images/ui-game/main-bg-md.jpg',
-  mainBgSm: '/images/ui-game/main-bg-sm.jpg',
+  mainBgMobile: '/images/ui-game/main-bg-mobile.jpg',
   coin: '/images/ui-game/icon-coin.png',
   diamond: '/images/ui-game/icon-diamond.png',
   settings: '/images/ui-game/btn-settings.png',
@@ -222,8 +221,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
           <div className="relative h-full w-full">
             <picture className="absolute inset-0 h-full w-full pointer-events-none select-none">
               <source media="(min-width: 1280px)" srcSet={UI_GAME_ASSETS.mainBg} />
-              <source media="(min-width: 768px)" srcSet={UI_GAME_ASSETS.mainBgMd} />
-              <img alt="" className="h-full w-full object-cover" src={UI_GAME_ASSETS.mainBgSm} />
+              <img alt="" className="h-full w-full object-cover" src={UI_GAME_ASSETS.mainBgMobile} />
             </picture>
 
             <div className="absolute inset-0 z-10 pointer-events-none">{children}</div>
@@ -364,8 +362,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
         <div className="relative h-full w-full">
           <picture className="absolute inset-0 h-full w-full pointer-events-none select-none">
             <source media="(min-width: 1280px)" srcSet={UI_GAME_ASSETS.mainBg} />
-            <source media="(min-width: 768px)" srcSet={UI_GAME_ASSETS.mainBgMd} />
-            <img alt="" className="h-full w-full object-cover" src={UI_GAME_ASSETS.mainBgSm} />
+            <img alt="" className="h-full w-full object-cover" src={UI_GAME_ASSETS.mainBgMobile} />
           </picture>
 
           <div className="absolute inset-0 z-30 pointer-events-none">

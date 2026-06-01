@@ -9,6 +9,7 @@ import {
   guidebookStyle
 } from '@/components/app/guidebook-modal';
 import PhaserGame from '@/components/PhaserGame';
+import { FixedAspectScene } from '@/components/layout/fixed-aspect-scene';
 import {
   type GameMatchFound,
   type GameSocketError,
@@ -135,8 +136,8 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
 
       <div className="phaser-canvas-frame">
         {socketReady ? (
-          <div className="relative h-full w-full overflow-hidden bg-[#050816]">
-            <div>
+          <FixedAspectScene designHeight={720} designWidth={1280}>
+            <div className="relative h-full w-full overflow-hidden bg-[#050816]">
               <div className="absolute inset-0">
                 <PhaserGame roomId={normalizedRoomId} playerId={matchedPlayerId} />
               </div>
@@ -148,7 +149,7 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
               />
               <GuideBookModal isOpen={isGuideBookOpen} onClose={() => setIsGuideBookOpen(false)} />
             </div>
-          </div>
+          </FixedAspectScene>
         ) : (
           <div className="game-route-loading">
             <p className="game-route-loading-title moba-heading">Connecting...</p>
