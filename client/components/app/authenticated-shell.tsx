@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -24,8 +24,7 @@ type AuthenticatedShellProps = {
 
 const UI_GAME_ASSETS = {
   mainBg: '/images/ui-game/main-bg.png',
-  mainBgMd: '/images/ui-game/main-bg-md.jpg',
-  mainBgSm: '/images/ui-game/main-bg-sm.jpg',
+  mainBgMobile: '/images/ui-game/main-bg-mobile.jpg',
   coin: '/images/ui-game/icon-coin.png',
   diamond: '/images/ui-game/icon-diamond.png',
   settings: '/images/ui-game/btn-settings.png',
@@ -65,6 +64,12 @@ const navItems: NavItem[] = [
     icon: UI_GAME_ASSETS.btnInbox
   }
 ];
+
+const adminNavItem: NavItem = {
+  href: '/admin/shop',
+  label: 'ADMIN',
+  icon: UI_GAME_ASSETS.btnShop
+};
 
 const toSceneStyle = (left: number, top: number, width: number, height: number) => ({
   height: `${(height / 1080) * 100}%`,
@@ -170,6 +175,11 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
     [user]
   );
 
+  const visibleNavItems = useMemo(
+    () => (user?.role === 'ADMIN' ? [...navItems, adminNavItem] : navItems),
+    [user?.role]
+  );
+
   const level = getLevelFromElo(profile.elo);
   const avatarLetter = profile.username.charAt(0).toUpperCase();
   const displayName = profile.username.length > 10
@@ -211,8 +221,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
           <div className="relative h-full w-full">
             <picture className="absolute inset-0 h-full w-full pointer-events-none select-none">
               <source media="(min-width: 1280px)" srcSet={UI_GAME_ASSETS.mainBg} />
-              <source media="(min-width: 768px)" srcSet={UI_GAME_ASSETS.mainBgMd} />
-              <img alt="" className="h-full w-full object-cover" src={UI_GAME_ASSETS.mainBgSm} />
+              <img alt="" className="h-full w-full object-cover" src={UI_GAME_ASSETS.mainBgMobile} />
             </picture>
 
             <div className="absolute inset-0 z-10 pointer-events-none">{children}</div>
@@ -224,7 +233,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
               type="button"
             >
               <img
-                alt="Bắt đầu chơi"
+                alt="B?t d?u choi"
                 className="h-full w-full object-contain"
                 src={UI_GAME_ASSETS.btnStart}
               />
@@ -262,7 +271,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
                 <p
                   className="overflow-hidden break-words tracking-[0.07em] [overflow-wrap:anywhere] [word-break:break-word] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
                   style={{
-                    fontFamily: "'FC Lilita One', cursive",
+                    fontFamily: 'var(--font-lilita-one), cursive',
                     color: '#FCD65A',
                     fontSize: 'clamp(0.68rem, 1.45vw, 1.65rem)',
                     lineHeight: 1.02,
@@ -279,7 +288,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
                 >
                   <span
                     style={{
-                      fontFamily: "'FC Lilita One', cursive",
+                      fontFamily: 'var(--font-lilita-one), cursive',
                       color: '#FCD65A',
                       fontSize: 'clamp(0.45rem, 0.75vw, 0.875rem)'
                     }}
@@ -324,7 +333,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
               aria-label="Main navigation"
               className="absolute bottom-[1.7%] left-[2.4%] z-20 flex gap-[0.55%] pointer-events-none"
             >
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link
@@ -353,11 +362,10 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
         <div className="relative h-full w-full">
           <picture className="absolute inset-0 h-full w-full pointer-events-none select-none">
             <source media="(min-width: 1280px)" srcSet={UI_GAME_ASSETS.mainBg} />
-            <source media="(min-width: 768px)" srcSet={UI_GAME_ASSETS.mainBgMd} />
-            <img alt="" className="h-full w-full object-cover" src={UI_GAME_ASSETS.mainBgSm} />
+            <img alt="" className="h-full w-full object-cover" src={UI_GAME_ASSETS.mainBgMobile} />
           </picture>
 
-          <div className="absolute inset-0 z-10 pointer-events-none">
+          <div className="absolute inset-0 z-30 pointer-events-none">
             <main className="h-full w-full pointer-events-auto">{children}</main>
           </div>
 
@@ -393,7 +401,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
               <p
                 className="overflow-hidden break-words tracking-[0.07em] [overflow-wrap:anywhere] [word-break:break-word] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
                 style={{
-                  fontFamily: "'FC Lilita One', cursive",
+                  fontFamily: 'var(--font-lilita-one), cursive',
                   color: '#FCD65A',
                   fontSize: 'clamp(0.68rem, 1.45vw, 1.65rem)',
                   lineHeight: 1.02,
@@ -410,7 +418,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
               >
                 <span
                   style={{
-                    fontFamily: "'FC Lilita One', cursive",
+                    fontFamily: 'var(--font-lilita-one), cursive',
                     color: '#FCD65A',
                     fontSize: 'clamp(0.45rem, 0.75vw, 0.875rem)'
                   }}
@@ -455,7 +463,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
             aria-label="Main navigation"
             className="absolute bottom-[1.7%] left-[2.4%] z-20 flex gap-[0.55%] pointer-events-none"
           >
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
                 <Link
@@ -477,3 +485,4 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
     </div>
   );
 };
+

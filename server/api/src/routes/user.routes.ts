@@ -60,7 +60,7 @@ userRouter.get('/me', requireAuth, async (req, res) => {
       include: {
         inventoryItems: {
           include: {
-            card: true
+            item: true
           }
         }
       }
@@ -80,11 +80,24 @@ userRouter.get('/me', requireAuth, async (req, res) => {
 
     const inventory = user.inventoryItems.map((item) => ({
       id: item.id,
-      cardCode: item.card.code,
-      cardName: item.card.name,
-      cardDescription: item.card.description,
-      cardImageUrl: item.card.imageUrl,
-      cardRarity: item.card.rarity,
+      itemId: item.item.id,
+      itemType: item.item.type,
+      itemCode: item.item.code,
+      itemName: item.item.name,
+      itemDescription: item.item.description,
+      itemImageUrl: item.item.imageUrl,
+      itemMetadata: item.item.metadata,
+      cardCode: item.item.code,
+      cardName: item.item.name,
+      cardDescription: item.item.description,
+      cardImageUrl: item.item.imageUrl,
+      cardRarity:
+        typeof item.item.metadata === 'object'
+        && item.item.metadata !== null
+        && !Array.isArray(item.item.metadata)
+        && typeof item.item.metadata.rarity === 'string'
+          ? item.item.metadata.rarity
+          : 'COMMON',
       quantity: item.quantity
     }));
 
@@ -210,7 +223,8 @@ userRouter.patch('/me/avatar', requireAuth, async (req, res) => {
         avatar: true,
         elo: true,
         coins: true,
-        gems: true
+        gems: true,
+        role: true
       }
     });
 

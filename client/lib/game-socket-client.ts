@@ -206,7 +206,7 @@ class GameSocketClient {
   onPartyUpdate(callback: (party: GamePartyUpdate) => void): Unsubscribe {
     const handler = (payload: MaybeWrapped<GamePartyUpdate>) => {
       const party = unwrapPayload(payload);
-      this.currentParty = party;
+      this.currentParty = party.status === 'matched' ? null : party;
       callback(party);
     };
 
@@ -265,7 +265,8 @@ class GameSocketClient {
     });
 
     this.socket.on('party:update', (payload: MaybeWrapped<GamePartyUpdate>) => {
-      this.currentParty = unwrapPayload(payload);
+      const party = unwrapPayload(payload);
+      this.currentParty = party.status === 'matched' ? null : party;
     });
 
     this.socket.on('match:found', (payload: MaybeWrapped<GameMatchFound>) => {

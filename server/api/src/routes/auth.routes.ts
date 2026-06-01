@@ -109,7 +109,8 @@ authRouter.post('/login', async (req, res) => {
     const token = jwt.sign(
       {
         sub: user.id,
-        username: user.username
+        username: user.username,
+        role: user.role
       },
       jwtSecret,
       {

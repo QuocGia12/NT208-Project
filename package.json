@@ -14,6 +14,7 @@
     "db:restart": "docker compose down && docker compose up -d postgres redis",
     "db:logs": "docker compose logs -f postgres redis",
     "db:migrate": "npm run prisma:migrate --prefix server/api",
+    "db:seed": "npm run prisma:seed --prefix server/api",
     "db:studio": "npm run prisma:studio --prefix server/api",
     "dev": "concurrently \"npm run db:up\" \"npm run dev:server:game\" \"npm run dev:server:api\" \"npm run dev:client\"",
     "dev:client": "npm run dev --prefix client",

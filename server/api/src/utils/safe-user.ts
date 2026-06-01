@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { User, UserRole } from '@prisma/client';
 
 export type SafeUser = {
   id: string;
@@ -7,6 +7,7 @@ export type SafeUser = {
   elo: number;
   coins: number;
   gems: number;
+  role: UserRole;
 };
 
 export const toSafeUser = (user: User): SafeUser => ({
@@ -15,5 +16,6 @@ export const toSafeUser = (user: User): SafeUser => ({
   avatar: user.avatar,
   elo: user.elo,
   coins: user.coins,
-  gems: user.gems
+  gems: user.gems,
+  role: user.role
 });

@@ -121,61 +121,34 @@ export class Board {
    * -> Total: 63 cells
    */
   static generate(activeZodiacs: ZodiacName[]): Board {
-    // 1. Prepare an array of all cell types to place
-    const types: string[] = [];
-    for (let i = 0; i < MAP.WALL_CELLS; i++) types.push('WALL');
-    for (let i = 0; i < MAP.DRAW_CELLS; i++) types.push('DRAW');
-    for (let i = 0; i < MAP.BLANK_CELLS; i++) types.push('BLANK');
-    for (const z of activeZodiacs) {
-      for (let i = 0; i < MAP.ACTIVE_CELLS_PER_ZODIAC; i++) types.push(`ZODIAC_${z}`);
+    const specialCellCount =
+      MAP.WALL_CELLS + MAP.DRAW_CELLS + activeZodiacs.length * MAP.ACTIVE_CELLS_PER_ZODIAC;
+    if (specialCellCount + MAP.BLANK_CELLS !== MAP.TOTAL_CELLS) {
+      throw new Error('Invalid MAP cell composition.');
     }
 
-    // 2. Initial random shuffle
-    Board.fisherYatesShuffle(types);
+    const types = new Array<string>(MAP.TOTAL_CELLS).fill('BLANK');
+    const availableIndexes = Array.from({ length: MAP.TOTAL_CELLS }, (_, index) => index);
 
-    // 3. Relaxation / Hill-climbing to maximize distance between same-type cells
-    const getScore = (grid: string[]) => {
-      let penalty = 0;
-      for (let y = 0; y < MAP.ROWS; y++) {
-        for (let x = 0; x < MAP.COLS; x++) {
-          const type = grid[y * MAP.COLS + x];
-          // Orthogonal adjacency is heavily penalized
-          if (x < MAP.COLS - 1 && grid[y * MAP.COLS + x + 1] === type) penalty += 3;
-          if (y < MAP.ROWS - 1 && grid[(y + 1) * MAP.COLS + x] === type) penalty += 3;
-          // Diagonal adjacency is lightly penalized
-          if (x < MAP.COLS - 1 && y < MAP.ROWS - 1 && grid[(y + 1) * MAP.COLS + x + 1] === type) penalty += 1;
-          if (x > 0 && y < MAP.ROWS - 1 && grid[(y + 1) * MAP.COLS + x - 1] === type) penalty += 1;
-        }
+    const placeSpreadGroup = (type: string, count: number): void => {
+      const pickedIndexes: number[] = [];
+
+      for (let i = 0; i < count; i++) {
+        const pickedAvailableIndex = Board.pickSoftSpreadIndex(availableIndexes, pickedIndexes);
+        const [cellIndex] = availableIndexes.splice(pickedAvailableIndex, 1);
+        types[cellIndex] = type;
+        pickedIndexes.push(cellIndex);
       }
-      return penalty;
     };
 
-    let currentScore = getScore(types);
-
-    for (let iter = 0; iter < 10000; iter++) {
-      if (currentScore === 0) break; // Perfect distribution found
-
-      const idx1 = Math.floor(Math.random() * types.length);
-      const idx2 = Math.floor(Math.random() * types.length);
-
-      if (types[idx1] === types[idx2]) continue;
-
-      // Swap
-      const temp = types[idx1];
-      types[idx1] = types[idx2];
-      types[idx2] = temp;
-
-      const newScore = getScore(types);
-      if (newScore <= currentScore) {
-        currentScore = newScore; // Accept the swap (even if score is same, allows drift)
-      } else {
-        // Revert swap
-        types[idx2] = types[idx1];
-        types[idx1] = temp;
-      }
+    // Place visible gameplay cells with a soft spread tendency. This is still random:
+    // nearby same-type cells can happen, but repeated groups are nudged across the map.
+    for (const zodiac of activeZodiacs) {
+      placeSpreadGroup(`ZODIAC_${zodiac}`, MAP.ACTIVE_CELLS_PER_ZODIAC);
     }
+    placeSpreadGroup('DRAW', MAP.DRAW_CELLS);
+    placeSpreadGroup('WALL', MAP.WALL_CELLS);
 
-    // 4. Build the cells array based on the optimized grid
     const cells: Cell[] = [];
     for (let y = 0; y < MAP.ROWS; y++) {
       for (let x = 0; x < MAP.COLS; x++) {
@@ -202,6 +175,49 @@ export class Board {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
+  }
+
+  private static pickSoftSpreadIndex(availableIndexes: number[], pickedIndexes: number[]): number {
+    if (availableIndexes.length === 0) {
+      throw new Error('No available board positions left to place.');
+    }
+    if (pickedIndexes.length === 0) {
+      return Math.floor(Math.random() * availableIndexes.length);
+    }
+
+    const sampleSize = Math.min(8, availableIndexes.length);
+    let bestAvailableIndex = Math.floor(Math.random() * availableIndexes.length);
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (let i = 0; i < sampleSize; i++) {
+      const availableIndex = Math.floor(Math.random() * availableIndexes.length);
+      const candidateIndex = availableIndexes[availableIndex];
+      const minDistance = Board.getMinManhattanDistance(candidateIndex, pickedIndexes);
+
+      // Small random jitter keeps this as a tendency instead of a hard spacing rule.
+      const score = minDistance + Math.random() * 1.75;
+      if (score > bestScore) {
+        bestScore = score;
+        bestAvailableIndex = availableIndex;
+      }
+    }
+
+    return bestAvailableIndex;
+  }
+
+  private static getMinManhattanDistance(cellIndex: number, otherIndexes: number[]): number {
+    const x = cellIndex % MAP.COLS;
+    const y = Math.floor(cellIndex / MAP.COLS);
+    let minDistance = Number.POSITIVE_INFINITY;
+
+    for (const otherIndex of otherIndexes) {
+      const otherX = otherIndex % MAP.COLS;
+      const otherY = Math.floor(otherIndex / MAP.COLS);
+      const distance = Math.abs(x - otherX) + Math.abs(y - otherY);
+      minDistance = Math.min(minDistance, distance);
+    }
+
+    return minDistance;
   }
 
 

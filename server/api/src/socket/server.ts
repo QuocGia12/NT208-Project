@@ -38,7 +38,7 @@ const extractToken = (socket: Socket): string | null => {
 
 export const initializeSocketServer = (
   httpServer: HttpServer,
-  frontendOrigin: string
+  frontendOrigin: string | string[]
 ) => {
   const io = new SocketIOServer(httpServer, {
     cors: {

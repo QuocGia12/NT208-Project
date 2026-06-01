@@ -264,10 +264,16 @@ export const MatchmakingFlow = ({ screen }: MatchmakingFlowProps) => {
         pendingPartyTimerRef.current = null;
       }
 
-      setCurrentParty(party);
       setIsSearching(false);
       setSearchStartedAt(null);
       setElapsedSeconds(0);
+      if (party.status === 'matched') {
+        setCurrentParty(null);
+        setStatusMessage('Tran da duoc tao. Dang vao man hinh game...');
+        return;
+      }
+
+      setCurrentParty(party);
       setStatusMessage(
         party.status === 'queued'
           ? 'Phòng đang tìm đối thủ...'
