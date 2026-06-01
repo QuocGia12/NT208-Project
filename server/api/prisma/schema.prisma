@@ -19,11 +19,23 @@ enum CardRarity {
   LEGENDARY
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ShopItemType {
+  CARD
+  SKIN
+  ITEM
+}
+
 model User {
   id           String          @id @default(cuid())
   username     String          @unique
   passwordHash String
   avatar       String?
+  role         UserRole        @default(USER)
   elo          Int             @default(1000)
   coins        Int             @default(0)
   gems         Int             @default(0)
@@ -67,22 +79,39 @@ model Card {
   isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+}
+
+model ShopItem {
+  id          String       @id @default(cuid())
+  type        ShopItemType
+  code        String       @unique
+  name        String
+  description String?
+  imageUrl    String?
+  priceCoins  Int          @default(0)
+  priceGems   Int          @default(0)
+  isActive    Boolean      @default(true)
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   inventories UserInventory[]
+
+  @@index([type, isActive])
 }
 
 model UserInventory {
   id         String   @id @default(cuid())
   userId     String
-  cardId     String
+  itemId     String
   quantity   Int      @default(1)
   acquiredAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item ShopItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, cardId])
-  @@index([cardId])
+  @@unique([userId, itemId])
+  @@index([itemId])
 }
 
 model MatchHistory {

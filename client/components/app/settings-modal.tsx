@@ -396,6 +396,28 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 
               <div className="h-px bg-cyan-400/10" />
 
+              {user?.role === 'ADMIN' ? (
+                <>
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">
+                      Admin
+                    </p>
+                    <button
+                      className="moba-secondary-button w-full"
+                      onClick={() => {
+                        onClose();
+                        router.push('/admin/shop');
+                      }}
+                      type="button"
+                    >
+                      Open Admin Shop
+                    </button>
+                  </div>
+
+                  <div className="h-px bg-cyan-400/10" />
+                </>
+              ) : null}
+
               <div className="space-y-2">
                 <p className="text-xs text-slate-400">
                   Logging out will clear your session. You will need to sign in again to

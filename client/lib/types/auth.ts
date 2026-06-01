@@ -1,3 +1,5 @@
+export type UserRole = 'USER' | 'ADMIN';
+
 export type AuthUser = {
   id: string;
   username: string;
@@ -5,6 +7,7 @@ export type AuthUser = {
   elo: number;
   coins: number;
   gems: number;
+  role: UserRole;
 };
 
 export type RegisterPayload = {

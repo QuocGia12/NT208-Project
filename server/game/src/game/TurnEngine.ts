@@ -23,6 +23,7 @@ import {
 import { GameState } from './GameState';
 import { MovementValidator } from './MovementValidator';
 import { WinLossChecker } from './WinLossChecker';
+import { awardMatchRewards } from '../services/MatchRewardClient';
 
 type BroadcastFn = (event: string, data: any) => void;
 type PrivateFn = (socketId: string, event: string, data: any) => void;
@@ -622,6 +623,8 @@ export class TurnEngine {
     });
 
     this.broadcastFn('game:state_update', { state: finalState });
+
+    void awardMatchRewards(this.gameState, winningTeamId);
   }
 
   // ─── Timer management ────────────────────────────────────

@@ -66,6 +66,12 @@ const navItems: NavItem[] = [
   }
 ];
 
+const adminNavItem: NavItem = {
+  href: '/admin/shop',
+  label: 'ADMIN',
+  icon: UI_GAME_ASSETS.btnShop
+};
+
 const toSceneStyle = (left: number, top: number, width: number, height: number) => ({
   height: `${(height / 1080) * 100}%`,
   left: `${(left / 1920) * 100}%`,
@@ -168,6 +174,11 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
       gems: user?.gems ?? 0
     }),
     [user]
+  );
+
+  const visibleNavItems = useMemo(
+    () => (user?.role === 'ADMIN' ? [...navItems, adminNavItem] : navItems),
+    [user?.role]
   );
 
   const level = getLevelFromElo(profile.elo);
@@ -324,7 +335,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
               aria-label="Main navigation"
               className="absolute bottom-[1.7%] left-[2.4%] z-20 flex gap-[0.55%] pointer-events-none"
             >
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link
@@ -357,7 +368,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
             <img alt="" className="h-full w-full object-cover" src={UI_GAME_ASSETS.mainBgSm} />
           </picture>
 
-          <div className="absolute inset-0 z-10 pointer-events-none">
+          <div className="absolute inset-0 z-30 pointer-events-none">
             <main className="h-full w-full pointer-events-auto">{children}</main>
           </div>
 
@@ -455,7 +466,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
             aria-label="Main navigation"
             className="absolute bottom-[1.7%] left-[2.4%] z-20 flex gap-[0.55%] pointer-events-none"
           >
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
                 <Link
