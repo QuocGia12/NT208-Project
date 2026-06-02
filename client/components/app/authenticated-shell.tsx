@@ -92,10 +92,6 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
-    if (isGameRoute) {
-      return undefined;
-    }
-
     const audio = new Audio('/music/music-loop.mp3');
     audio.loop = true;
     audio.preload = 'auto';
@@ -152,7 +148,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
       audio.pause();
       audio.src = '';
     };
-  }, [isGameRoute]);
+  }, []);
 
   useEffect(() => {
     setHasHydrated(true);
