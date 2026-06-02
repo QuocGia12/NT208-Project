@@ -1450,9 +1450,9 @@ body {
   .profile-hero {
     background: linear-gradient(
       155deg,
-      rgba(45, 80, 22, 0.82) 0%,
-      rgba(61, 107, 33, 0.70) 58%,
-      rgba(76, 175, 80, 0.58) 100%
+      rgba(38, 68, 18, 0.98) 0%,
+      rgba(55, 95, 29, 0.97) 58%,
+      rgba(78, 116, 34, 0.96) 100%
     );
     border: 1px solid rgba(244, 183, 59, 0.56);
     border-radius: 1.25rem;
@@ -1462,7 +1462,6 @@ body {
       0 0 18px rgba(139, 105, 20, 0.16);
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(12px);
   }
 
   .profile-hero::before {
@@ -1507,8 +1506,8 @@ body {
   .profile-stat-card {
     background: linear-gradient(
       160deg,
-      rgba(45, 80, 22, 0.80) 0%,
-      rgba(61, 107, 33, 0.66) 100%
+      rgba(31, 62, 16, 0.97) 0%,
+      rgba(48, 82, 24, 0.96) 100%
     );
     border: 1px solid rgba(244, 183, 59, 0.56);
     border-radius: 1rem;
@@ -1556,6 +1555,18 @@ body {
     line-height: 1.2;
   }
 
+  .profile-info-banner {
+    border: 1px solid rgba(103, 232, 249, 0.32);
+    background: linear-gradient(
+      160deg,
+      rgba(12, 46, 54, 0.94) 0%,
+      rgba(16, 70, 78, 0.92) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 10px 22px rgba(0, 0, 0, 0.32);
+  }
+
   .profile-section-heading {
     font-family: var(--font-baloo-2), 'Trebuchet MS', 'Impact', sans-serif;
     font-size: 0.82rem;
@@ -1584,8 +1595,8 @@ body {
   .inventory-card {
     background: linear-gradient(
       160deg,
-      rgba(45, 80, 22, 0.84) 0%,
-      rgba(61, 107, 33, 0.72) 100%
+      rgba(31, 62, 16, 0.98) 0%,
+      rgba(51, 83, 25, 0.97) 100%
     );
     border: 1px solid rgba(244, 183, 59, 0.50);
     border-radius: 0.9rem;
@@ -1594,7 +1605,6 @@ body {
       0 10px 20px rgba(0, 0, 0, 0.48);
     overflow: hidden;
     transition: transform 0.22s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-    backdrop-filter: blur(10px);
   }
 
   .inventory-card:hover {
@@ -2213,6 +2223,19 @@ body {
     padding: 2.5rem 1.5rem;
     text-align: center;
     backdrop-filter: blur(8px);
+  }
+
+  .profile-page-shell .empty-state {
+    background: linear-gradient(
+      160deg,
+      rgba(218, 196, 128, 0.96) 0%,
+      rgba(180, 166, 92, 0.95) 100%
+    );
+    border-style: solid;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      0 12px 24px rgba(0, 0, 0, 0.36);
+    backdrop-filter: none;
   }
 
   /* ─── Friends Page ─── */
@@ -4131,6 +4154,111 @@ button.party-slot-empty:hover:not(:disabled) {
   .panel-container-chat .chat-compose-form .moba-button {
     min-width: 120px;
     width: auto;
+  }
+}
+
+/* Leaderboard mobile manual tuning.
+   Main knobs:
+   - --leaderboard-mobile-panel-width: horizontal panel size.
+   - --leaderboard-mobile-panel-x/y: move the whole scoreboard panel.
+   - --leaderboard-mobile-content-left/right/top/bottom: move/resize the inner content window.
+   - --leaderboard-mobile-content-padding-x/y: inner spacing inside the content window. */
+@media (max-width: 1023px) {
+  .panel-container-leaderboard {
+    --leaderboard-mobile-panel-width: 80%;
+    --leaderboard-mobile-panel-x: 0rem;
+    --leaderboard-mobile-panel-y: 0rem;
+    --leaderboard-mobile-content-top: 16%;
+    --leaderboard-mobile-content-right: 6%;
+    --leaderboard-mobile-content-bottom: 10%;
+    --leaderboard-mobile-content-left: 6%;
+    --leaderboard-mobile-content-padding-x: 6.4%;
+    --leaderboard-mobile-content-padding-y: 2.15%;
+    --leaderboard-mobile-section-gap: 0.38rem;
+    --leaderboard-mobile-card-gap: 0.42rem;
+    --leaderboard-mobile-header-padding-x: 0.55rem;
+    --leaderboard-mobile-header-padding-y: 0.32rem;
+    --leaderboard-mobile-card-padding-x: 0.34rem;
+    --leaderboard-mobile-card-padding-y: 0.26rem;
+    --leaderboard-mobile-avatar-size: 1.75rem;
+    --leaderboard-mobile-top-avatar-size: 2.45rem;
+    --leaderboard-mobile-top-badge-size: 38px;
+    --leaderboard-mobile-row-badge-size: 18px;
+    --leaderboard-mobile-row-rank-width: 46px;
+    --leaderboard-mobile-row-elo-width: 62px;
+    --leaderboard-mobile-row-gap: 0.42rem;
+    --leaderboard-mobile-row-padding-x: 0.42rem;
+    --leaderboard-mobile-row-padding-y: 0.26rem;
+
+    --panel-width: var(--leaderboard-mobile-panel-width);
+    --panel-content-top: var(--leaderboard-mobile-content-top);
+    --panel-content-right: var(--leaderboard-mobile-content-right);
+    --panel-content-bottom: var(--leaderboard-mobile-content-bottom);
+    --panel-content-left: var(--leaderboard-mobile-content-left);
+
+    transform: translate(
+      var(--leaderboard-mobile-panel-x),
+      var(--leaderboard-mobile-panel-y)
+    );
+  }
+
+  .panel-container-leaderboard .panel-content {
+    padding:
+      var(--leaderboard-mobile-content-padding-y)
+      var(--leaderboard-mobile-content-padding-x);
+  }
+
+  .panel-container-leaderboard .panel-content > :not([hidden]) ~ :not([hidden]) {
+    margin-top: var(--leaderboard-mobile-section-gap);
+  }
+
+  .panel-container-leaderboard .leaderboard-header-panel {
+    padding:
+      var(--leaderboard-mobile-header-padding-y)
+      var(--leaderboard-mobile-header-padding-x);
+  }
+
+  .panel-container-leaderboard .leaderboard-top-grid {
+    gap: var(--leaderboard-mobile-card-gap);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .panel-container-leaderboard .leaderboard-top-card {
+    padding:
+      var(--leaderboard-mobile-card-padding-y)
+      var(--leaderboard-mobile-card-padding-x);
+  }
+
+  .panel-container-leaderboard .leaderboard-avatar {
+    height: var(--leaderboard-mobile-avatar-size);
+    width: var(--leaderboard-mobile-avatar-size);
+  }
+
+  .panel-container-leaderboard .leaderboard-avatar-lg {
+    height: var(--leaderboard-mobile-top-avatar-size);
+    width: var(--leaderboard-mobile-top-avatar-size);
+  }
+
+  .panel-container-leaderboard .leaderboard-top-rank-badge {
+    height: var(--leaderboard-mobile-top-badge-size);
+    width: var(--leaderboard-mobile-top-badge-size);
+  }
+
+  .panel-container-leaderboard .leaderboard-row-rank-badge {
+    height: var(--leaderboard-mobile-row-badge-size);
+    width: var(--leaderboard-mobile-row-badge-size);
+  }
+
+  .panel-container-leaderboard .leaderboard-table-head,
+  .panel-container-leaderboard .leaderboard-row {
+    gap: var(--leaderboard-mobile-row-gap);
+    grid-template-columns:
+      var(--leaderboard-mobile-row-rank-width)
+      minmax(0, 1fr)
+      var(--leaderboard-mobile-row-elo-width);
+    padding:
+      var(--leaderboard-mobile-row-padding-y)
+      var(--leaderboard-mobile-row-padding-x);
   }
 }
 

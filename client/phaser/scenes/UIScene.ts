@@ -73,7 +73,6 @@ export class UIScene extends Phaser.Scene {
   private revealPopup!: RevealPopup;
   private eliminationBanner!: EliminationBanner;
   private gameOverOverlay!: GameOverOverlay;
-  private stopPhaseButton!: ActionButton;
   private waitButton!: ActionButton;
   private discardOverlay!: DiscardOverlay;
   private movementPad!: MovementPad;
@@ -112,7 +111,6 @@ export class UIScene extends Phaser.Scene {
     this.createRevealPopup();
     this.createEliminationBanner();
     this.createGameOverOverlay();
-    this.createStopPhaseButton();
     this.createWaitButton();
     this.createDiscardOverlay();
     this.createMovementPad();
@@ -171,7 +169,6 @@ export class UIScene extends Phaser.Scene {
     this.revealPopup.container.destroy(true);
     this.eliminationBanner.container.destroy(true);
     this.gameOverOverlay.container.destroy(true);
-    this.stopPhaseButton.container.destroy(true);
     this.waitButton.container.destroy(true);
     this.discardOverlay.container.destroy(true);
     this.movementPad.container.destroy(true);
@@ -294,7 +291,6 @@ export class UIScene extends Phaser.Scene {
     const teamId = typeof winner?.teamId === 'string' ? winner.teamId : '';
 
     this.gameOverOverlay.title.setText(`Team thang: ${teamId}\n${winnerNames}`);
-    this.setStopPhaseButtonVisible(false);
     this.setWaitButtonVisible(false);
     this.setMovementPadVisible(false);
 
@@ -343,7 +339,6 @@ export class UIScene extends Phaser.Scene {
       this.timerBar.stop();
       this.timerBar.showLabel(isMyTurn ? 'Chon o xuat phat...' : 'Nguoi choi khac dang chon o xuat phat');
       this.diceDisplay.hide();
-      this.setStopPhaseButtonVisible(false);
       this.setWaitButtonVisible(false);
       this.setMovementPadVisible(false);
       return;
@@ -354,7 +349,6 @@ export class UIScene extends Phaser.Scene {
       this.timerBar.showLabel('Rut bai...');
       this.diceDisplay.hide();
       this.rollingShown = false;
-      this.setStopPhaseButtonVisible(false);
       this.setWaitButtonVisible(false);
       this.setMovementPadVisible(false);
       return;
@@ -377,7 +371,6 @@ export class UIScene extends Phaser.Scene {
         this.rollingShown = false;
       }
 
-      this.setStopPhaseButtonVisible(false);
       this.setWaitButtonVisible(false);
       this.setMovementPadVisible(false);
       return;
@@ -389,7 +382,6 @@ export class UIScene extends Phaser.Scene {
       this.timerBar.showLabel(`Di chuyen: ${phase2.stepsRemaining} buoc`);
       this.diceDisplay.showResult(phase2.diceResult);
       this.rollingShown = false;
-      this.setStopPhaseButtonVisible(false);
       this.setWaitButtonVisible(false);
       this.setMovementPadVisible(isMyTurn);
       if (isMyTurn) {
@@ -407,7 +399,6 @@ export class UIScene extends Phaser.Scene {
       this.timerBar.showLabel(phaseLabel);
       this.timerBar.startCountdown(phase3.timerExpiresAt);
       this.rollingShown = false;
-      this.setStopPhaseButtonVisible(isMyTurn);
       this.setWaitButtonVisible(isMyTurn);
       this.setMovementPadVisible(false);
       return;
@@ -415,7 +406,6 @@ export class UIScene extends Phaser.Scene {
 
     this.timerBar.stop();
     this.timerBar.showLabel('');
-    this.setStopPhaseButtonVisible(false);
     this.setWaitButtonVisible(false);
     this.setMovementPadVisible(false);
   }
@@ -858,23 +848,6 @@ export class UIScene extends Phaser.Scene {
     }
   }
 
-  private createStopPhaseButton(): void {
-    this.stopPhaseButton = this.createActionButton(
-      GAME_UI_LAYOUT.rollButton.centerX,
-      GAME_UI_LAYOUT.rollButton.centerY,
-      Math.round(GAME_UI_LAYOUT.rollButton.width),
-      Math.round(GAME_UI_LAYOUT.rollButton.height),
-      'Dung phase',
-      'ui-button-roll',
-      () => {
-        if (this.boardSceneRef) {
-          this.boardSceneRef.events.emit('card-phase-stop');
-        }
-      },
-    );
-    this.setStopPhaseButtonVisible(false);
-  }
-
   private createWaitButton(): void {
     this.waitButton = this.createActionButton(
       GAME_UI_LAYOUT.waitButton.centerX,
@@ -890,13 +863,6 @@ export class UIScene extends Phaser.Scene {
       },
     );
     this.setWaitButtonVisible(false);
-  }
-
-  private setStopPhaseButtonVisible(visible: boolean): void {
-    this.stopPhaseButton.container.setVisible(visible);
-    if (!visible) {
-      this.stopPhaseButton.container.setScale(1);
-    }
   }
 
   private setWaitButtonVisible(visible: boolean): void {

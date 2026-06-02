@@ -240,9 +240,8 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
               />
             </button>
 
-            <Link
-              className="absolute z-20 block pointer-events-auto transition-transform hover:scale-[1.02]"
-              href="/profile"
+            <div
+              className="absolute z-20 block pointer-events-none"
               style={toSceneStyle(22, 12, 662, 178)}
             >
               <img alt="" className="absolute inset-0 h-full w-full object-contain" src={avatarFrameSrc} />
@@ -298,7 +297,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
                   </span>
                 </div>
               </div>
-            </Link>
+            </div>
 
             <div className="absolute z-20" style={toSceneStyle(1050, 60, 313, 106)}>
               <img alt="Coins" className="h-full w-full object-contain" src={UI_GAME_ASSETS.coin} />
@@ -370,9 +369,8 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
             <main className="h-full w-full pointer-events-auto">{children}</main>
           </div>
 
-          <Link
-            className="absolute z-20 block pointer-events-auto transition-transform hover:scale-[1.02]"
-            href="/profile"
+          <div
+            className="absolute z-20 block pointer-events-none"
             style={toSceneStyle(22, 12, 662, 178)}
           >
             <img alt="" className="absolute inset-0 h-full w-full object-contain" src={avatarFrameSrc} />
@@ -428,7 +426,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
                 </span>
               </div>
             </div>
-          </Link>
+          </div>
 
           <div className="absolute z-20" style={toSceneStyle(1050, 60, 313, 106)}>
             <img alt="Coins" className="h-full w-full object-contain" src={UI_GAME_ASSETS.coin} />

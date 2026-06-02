@@ -1,6 +1,5 @@
 ﻿'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -275,12 +274,6 @@ export default function FriendsPage() {
                           </p>
                         </div>
                       </div>
-                      <Link
-                        className="friends-action-button friends-action-button-muted"
-                        href={`/profile/${encodeURIComponent(friend.username)}`}
-                      >
-                        View Profile
-                      </Link>
                     </article>
                   ))}
                 </div>

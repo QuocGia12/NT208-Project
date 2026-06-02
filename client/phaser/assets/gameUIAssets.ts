@@ -8,7 +8,6 @@ type AssetDef = {
 
 export const GAME_UI_IMAGE_ASSETS: AssetDef[] = [
   { key: 'ui-background-main', path: '/figma-game-ui/background-main.png' },
-  { key: 'ui-button-roll', path: '/game-ui/buttons/button-roll.svg' },
   { key: 'ui-button-skip', path: '/game-ui/buttons/button-skip.svg' },
   { key: 'ui-board-frame', path: '/figma-game-ui/board-main-table.png' },
   { key: 'ui-card-panel-frame', path: '/figma-game-ui/card-panel.png' },

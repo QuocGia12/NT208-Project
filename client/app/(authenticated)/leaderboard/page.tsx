@@ -1,7 +1,6 @@
 ﻿'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -185,12 +184,9 @@ export default function LeaderboardPage() {
                               className="leaderboard-row-rank-badge"
                             />
                           ) : null}
-                          <Link
-                            className="truncate text-sm font-semibold uppercase tracking-[0.08em] text-amber-100 hover:text-amber-200"
-                            href={`/profile/${encodeURIComponent(entry.username)}`}
-                          >
+                          <span className="truncate text-sm font-semibold uppercase tracking-[0.08em] text-amber-100">
                             {entry.username}
-                          </Link>
+                          </span>
                         </div>
 
                         <span className="text-right text-sm font-bold text-cyan-200">

@@ -68,15 +68,6 @@ const figmaAssets = [
     height: 236,
   },
   {
-    key: 'button-roll',
-    src: '/figma-game-ui/button-roll.png',
-    alt: 'Figma roll button',
-    x: 1550,
-    y: 373,
-    width: 266,
-    height: 72,
-  },
-  {
     key: 'button-skip',
     src: '/figma-game-ui/button-skip.png',
     alt: 'Figma skip button',

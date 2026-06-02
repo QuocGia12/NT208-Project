@@ -38,7 +38,6 @@ const toSlot = (rect: FigmaRect) => {
 
 export const GAME_UI_LAYOUT = {
   dice: toSlot({ x: 122, y: 239, width: 247, height: 236 }),
-  rollButton: toSlot({ x: 116, y: 525, width: 266, height: 72 }),
   waitButton: toSlot({ x: 116, y: 628, width: 266, height: 72 }),
   movementPad: toSlot({ x: 84, y: 817, width: 325, height: 320.9205322265625 }),
   cardPanel: toSlot({ x: -880, y: 1029, width: 849.7188110351562, height: 219.59400939941406 }),
