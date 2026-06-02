@@ -41,6 +41,8 @@ export class BoardScene extends Phaser.Scene {
   private pendingChangeTeammateCardId: string | null = null;
   private helperHighlightCardIds: string[] = [];
   private isPreviewMode = false;
+  private isCardPreviewOpen = false;
+  private suppressBoardClickUntil = 0;
 
   private readonly onStateUpdateHandler = (payload: any): void => this.onStateUpdate(payload);
   private readonly onPrivateUpdateHandler = (payload: any): void => this.onPrivateUpdate(payload);
@@ -82,6 +84,8 @@ export class BoardScene extends Phaser.Scene {
     this.setupInput();
 
     this.events.on('card-clicked', this.onCardClicked, this);
+    this.events.on('card-preview-opened', this.onCardPreviewOpened, this);
+    this.events.on('card-preview-closed', this.onCardPreviewClosed, this);
     this.events.on('card-phase-stop', this.onCardPhaseStop, this);
     this.events.on('virtual-move', this.onVirtualMove, this);
 
@@ -194,6 +198,8 @@ export class BoardScene extends Phaser.Scene {
     this.input.keyboard?.off('keydown', this.onKeyboardInput, this);
     this.input.off('pointerdown', this.onBoardClick, this);
     this.events.off('card-clicked', this.onCardClicked, this);
+    this.events.off('card-preview-opened', this.onCardPreviewOpened, this);
+    this.events.off('card-preview-closed', this.onCardPreviewClosed, this);
     this.events.off('card-phase-stop', this.onCardPhaseStop, this);
     this.events.off('virtual-move', this.onVirtualMove, this);
 
@@ -540,6 +546,15 @@ export class BoardScene extends Phaser.Scene {
     this.socketClient.sendPlayCard(cardId);
   }
 
+  private onCardPreviewOpened(): void {
+    this.isCardPreviewOpen = true;
+  }
+
+  private onCardPreviewClosed(): void {
+    this.isCardPreviewOpen = false;
+    this.suppressBoardClickUntil = Date.now() + 140;
+  }
+
   private onCardPhaseStop(): void {
     if (this.isPreviewMode) return;
     if (!this.currentState) return;
@@ -570,6 +585,10 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private onBoardClick(pointer: Phaser.Input.Pointer): void {
+    if (this.isCardPreviewOpen || Date.now() < this.suppressBoardClickUntil) {
+      return;
+    }
+
     const boardPos = this.boardRenderer.getCellAtWorldPos(pointer.worldX, pointer.worldY);
     if (!boardPos) return;
 
