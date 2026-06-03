@@ -495,24 +495,31 @@ export interface RoomJoinPayload {
 export interface PlayerMovePayload {
   direction: Direction;
   roomId?: string;
+  playerId?: string;
 }
 
 export interface PlayerPlayCardPayload {
   cardId: string;
   roomId?: string;
+  playerId?: string;
   targetPos?: Position;
   helperCardId?: string;
 }
 
-export interface PlayerEndCardPhasePayload { roomId?: string; }
+export interface PlayerEndCardPhasePayload {
+  roomId?: string;
+  playerId?: string;
+}
 
 export interface PlayerDiscardCardsPayload {
   cardIds: string[];
   roomId?: string;
+  playerId?: string;
 }
 
 export interface PlayerRequestStatePayload {
   roomId: string;
+  playerId?: string;
 }
 
 // === Server → Client ===

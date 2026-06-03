@@ -195,6 +195,36 @@ export class GameRoom {
     }
   }
 
+  reconnectPlayerSocket(socket: Socket, playerId?: string): Player | null {
+    if (!this.gameState) return null;
+
+    const existingSocketPlayer = this.gameState.getPlayerBySocketId(socket.id);
+    if (existingSocketPlayer) {
+      existingSocketPlayer.connected = true;
+      socket.join(this.id);
+      return existingSocketPlayer;
+    }
+
+    if (!playerId) return null;
+
+    const player = this.gameState.getPlayerById(playerId);
+    if (!player) return null;
+
+    const previousSocketId = player.socketId;
+    player.socketId = socket.id;
+    player.connected = true;
+    socket.join(this.id);
+
+    if (previousSocketId !== socket.id) {
+      this.broadcastAll('server:player_reconnected', {
+        playerId: player.id,
+        playerName: player.name,
+      });
+    }
+
+    return player;
+  }
+
   handleMove(socketId: string, direction: Direction): void {
     if (!this.turnEngine || !this.gameState) {
       this.emitGameError(socketId, ErrorCode.GAME_NOT_STARTED, 'Game has not started yet.');
@@ -310,11 +340,13 @@ export class GameRoom {
     }
   }
 
-  handleRequestState(socket: Socket): void {
+  handleRequestState(socket: Socket, playerId?: string): void {
     if (!this.gameState) {
       this.emitGameError(socket.id, ErrorCode.GAME_NOT_STARTED, 'Game has not started yet.');
       return;
     }
+
+    this.reconnectPlayerSocket(socket, playerId);
 
     socket.emit('game:state_update', {
       ok: true,

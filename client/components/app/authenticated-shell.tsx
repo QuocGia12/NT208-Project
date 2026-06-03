@@ -242,7 +242,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
             >
               <img alt="" className="absolute inset-0 h-full w-full object-contain" src={avatarFrameSrc} />
               <div
-                className="absolute left-[3.3%] top-[6.7%] flex w-[23%] aspect-square items-center justify-center overflow-hidden rounded-full bg-[#f7f2e2]"
+                className="absolute left-[2.5%] top-[7%] flex w-[23%] aspect-square items-center justify-center overflow-hidden rounded-full bg-[#f7f2e2]"
                 style={
                   profile.avatar
                     ? {

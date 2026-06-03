@@ -68,12 +68,21 @@ function resolveGameplayRoom(
   roomManager: RoomManager,
   socket: Socket,
   roomId: unknown,
+  playerId?: unknown,
 ): GameRoom | null {
   if (typeof roomId === 'string' && roomId.trim().length > 0) {
     const room = roomManager.getRoom(roomId.trim());
     if (!room) {
       emitError(socket, ErrorCode.ROOM_NOT_FOUND, 'Room not found.');
       return null;
+    }
+
+    if (typeof playerId === 'string' && playerId.trim().length > 0) {
+      const player = room.reconnectPlayerSocket(socket, playerId.trim());
+      if (!player) {
+        emitError(socket, ErrorCode.ROOM_NOT_IN_ROOM, 'Player is not in this room.');
+        return null;
+      }
     }
 
     return room;
@@ -376,26 +385,26 @@ export function setupSocketHandler(io: Server): void {
     // -------- GAME EVENTS --------
 
     socket.on('player:move', (payload: any) => {
-      const data = unwrapPayload<{ direction: Direction; roomId?: string }>(payload);
+      const data = unwrapPayload<{ direction: Direction; roomId?: string; playerId?: string }>(payload);
       if (!data || typeof data.direction !== 'string') {
         emitError(socket, ErrorCode.INVALID_PAYLOAD, 'Invalid player:move payload.');
         return;
       }
 
-      const room = resolveGameplayRoom(roomManager, socket, data.roomId);
+      const room = resolveGameplayRoom(roomManager, socket, data.roomId, data.playerId);
       if (!room) return;
 
       room.handleMove(socket.id, data.direction);
     });
 
     socket.on('player:pick_spawn', (payload: any) => {
-      const data = unwrapPayload<{ position: Position; roomId?: string }>(payload);
+      const data = unwrapPayload<{ position: Position; roomId?: string; playerId?: string }>(payload);
       if (!data || !data.position || typeof data.position.x !== 'number' || typeof data.position.y !== 'number') {
         emitError(socket, ErrorCode.INVALID_PAYLOAD, 'Invalid player:pick_spawn payload.');
         return;
       }
 
-      const room = resolveGameplayRoom(roomManager, socket, data.roomId);
+      const room = resolveGameplayRoom(roomManager, socket, data.roomId, data.playerId);
       if (!room) return;
 
       room.handlePickSpawn(socket.id, data.position);
@@ -405,6 +414,7 @@ export function setupSocketHandler(io: Server): void {
       const data = unwrapPayload<{
         cardId: string;
         roomId?: string;
+        playerId?: string;
         targetPos?: Position;
         helperCardId?: string;
       }>(payload);
@@ -417,22 +427,22 @@ export function setupSocketHandler(io: Server): void {
         return;
       }
 
-      const room = resolveGameplayRoom(roomManager, socket, data.roomId);
+      const room = resolveGameplayRoom(roomManager, socket, data.roomId, data.playerId);
       if (!room) return;
 
       room.handlePlayCard(socket.id, data.cardId, data.targetPos, data.helperCardId);
     });
 
     socket.on('player:end_card_phase', (payload: any) => {
-      const data = unwrapPayload<{ roomId?: string }>(payload) ?? {};
-      const room = resolveGameplayRoom(roomManager, socket, data.roomId);
+      const data = unwrapPayload<{ roomId?: string; playerId?: string }>(payload) ?? {};
+      const room = resolveGameplayRoom(roomManager, socket, data.roomId, data.playerId);
       if (!room) return;
 
       room.handleEndCardPhase(socket.id);
     });
 
     socket.on('player:discard_cards', (payload: any) => {
-      const data = unwrapPayload<{ cardIds: string[]; roomId?: string }>(payload);
+      const data = unwrapPayload<{ cardIds: string[]; roomId?: string; playerId?: string }>(payload);
       if (
         !data
         || !Array.isArray(data.cardIds)
@@ -442,14 +452,14 @@ export function setupSocketHandler(io: Server): void {
         return;
       }
 
-      const room = resolveGameplayRoom(roomManager, socket, data.roomId);
+      const room = resolveGameplayRoom(roomManager, socket, data.roomId, data.playerId);
       if (!room) return;
 
       room.handleDiscardCards(socket.id, data.cardIds);
     });
 
     socket.on('player:request_state', (payload: any) => {
-      const data = unwrapPayload<{ roomId: string }>(payload);
+      const data = unwrapPayload<{ roomId: string; playerId?: string }>(payload);
       if (!data || typeof data.roomId !== 'string') {
         emitError(socket, ErrorCode.INVALID_PAYLOAD, 'Invalid player:request_state payload.');
         return;
@@ -461,7 +471,7 @@ export function setupSocketHandler(io: Server): void {
         return;
       }
 
-      room.handleRequestState(socket);
+      room.handleRequestState(socket, data.playerId);
     });
 
     // -------- DISCONNECT --------

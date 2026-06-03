@@ -70,35 +70,54 @@ export class SocketClient {
   }
 
   sendMove(direction: Direction): void {
-    this.ensureSocket().emit('player:move', { direction, roomId: this.myRoomId });
+    this.ensureSocket().emit('player:move', {
+      direction,
+      roomId: this.myRoomId,
+      playerId: this.myPlayerId,
+    });
   }
 
   sendPickSpawn(position: Position): void {
-    this.ensureSocket().emit('player:pick_spawn', { position, roomId: this.myRoomId });
+    this.ensureSocket().emit('player:pick_spawn', {
+      position,
+      roomId: this.myRoomId,
+      playerId: this.myPlayerId,
+    });
   }
 
   sendPlayCard(cardId: string, targetPos?: Position, helperCardId?: string): void {
     const payload: {
       cardId: string;
       roomId?: string;
+      playerId?: string;
       targetPos?: Position;
       helperCardId?: string;
-    } = { cardId, roomId: this.myRoomId };
+    } = { cardId, roomId: this.myRoomId, playerId: this.myPlayerId };
     if (targetPos) payload.targetPos = targetPos;
     if (helperCardId) payload.helperCardId = helperCardId;
     this.ensureSocket().emit('player:play_card', payload);
   }
 
   endCardPhaseNow(): void {
-    this.ensureSocket().emit('player:end_card_phase', { roomId: this.myRoomId });
+    this.ensureSocket().emit('player:end_card_phase', {
+      roomId: this.myRoomId,
+      playerId: this.myPlayerId,
+    });
   }
 
   sendDiscardCards(cardIds: string[]): void {
-    this.ensureSocket().emit('player:discard_cards', { cardIds, roomId: this.myRoomId });
+    this.ensureSocket().emit('player:discard_cards', {
+      cardIds,
+      roomId: this.myRoomId,
+      playerId: this.myPlayerId,
+    });
   }
 
   requestState(roomId: string): void {
-    this.ensureSocket().emit('player:request_state', { roomId });
+    this.ensureSocket().emit('player:request_state', {
+      roomId,
+      playerId: this.myPlayerId,
+    });
   }
 
   debugFillRoom(): void {
