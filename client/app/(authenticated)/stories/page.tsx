@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { getLevelFromElo } from '@/lib/rank-system';
 import { FixedAspectScene } from '@/components/layout/fixed-aspect-scene';
+import { useAuthStore } from '@/store/auth-store';
 
 type ChapterMeta = {
   id: number;
@@ -16,21 +18,20 @@ type ChapterContent = {
   text: string;
 };
 
-// Only metadata here — no large strings, bundle stays tiny
-const CHAPTERS: ChapterMeta[] = [
-  { id: 1, bg: '/images/stories/chapter-1-bg.png', unlocked: true  },
-  { id: 2, bg: '/images/stories/chapter-2-bg.png', unlocked: true  },
-  { id: 3, bg: '/images/stories/chapter-3-bg.png', unlocked: true  },
-  { id: 4, bg: '/images/stories/chapter-4-bg.png', unlocked: true  },
-  { id: 5, bg: '/images/stories/chapter-5-bg.png', unlocked: true  },
-  { id: 6, bg: '/images/stories/chapter-6-bg.png', unlocked: true  },
-  { id: 7, bg: '/images/stories/chapter-7-bg.png', unlocked: false },
-  { id: 8, bg: '/images/stories/chapter-8-bg.png', unlocked: false },
-  { id: 9, bg: '/images/stories/chapter-9-bg.png', unlocked: false },
-];
+const CHAPTER_BACKGROUNDS = [
+  '/images/stories/chapter-1-bg.png',
+  '/images/stories/chapter-2-bg.png',
+  '/images/stories/chapter-3-bg.png',
+  '/images/stories/chapter-4-bg.png',
+  '/images/stories/chapter-5-bg.png',
+  '/images/stories/chapter-6-bg.png',
+  '/images/stories/chapter-7-bg.png',
+  '/images/stories/chapter-8-bg.png',
+  '/images/stories/chapter-9-bg.png',
+] as const;
 
 const CHAPTERS_PER_PAGE = 6;
-const TOTAL_PAGES = Math.ceil(CHAPTERS.length / CHAPTERS_PER_PAGE);
+const TOTAL_PAGES = Math.ceil(CHAPTER_BACKGROUNDS.length / CHAPTERS_PER_PAGE);
 
 const LORA = 'var(--font-lora), "Lora", serif';
 
@@ -41,8 +42,18 @@ export default function StoriesPage() {
   const [content, setContent] = useState<ChapterContent | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const current = CHAPTERS.find((c) => c.id === selectedId) ?? CHAPTERS[0];
-  const visibleChapters = CHAPTERS.slice(page * CHAPTERS_PER_PAGE, (page + 1) * CHAPTERS_PER_PAGE);
+  const userElo = useAuthStore((s) => s.user?.elo ?? 1000);
+  const userLevel = getLevelFromElo(userElo);
+
+  // Chapter X is unlocked when userLevel >= X
+  const chapters: ChapterMeta[] = CHAPTER_BACKGROUNDS.map((bg, i) => ({
+    id: i + 1,
+    bg,
+    unlocked: userLevel >= i + 1,
+  }));
+
+  const current = chapters.find((c) => c.id === selectedId) ?? chapters[0];
+  const visibleChapters = chapters.slice(page * CHAPTERS_PER_PAGE, (page + 1) * CHAPTERS_PER_PAGE);
 
   // Fetch chapter content from server whenever selection changes
   useEffect(() => {
@@ -74,14 +85,14 @@ export default function StoriesPage() {
     if (page === 0) return;
     const newPage = page - 1;
     setPage(newPage);
-    setSelectedId(CHAPTERS[newPage * CHAPTERS_PER_PAGE].id);
+    setSelectedId(chapters[newPage * CHAPTERS_PER_PAGE].id);
   };
 
   const handleNext = () => {
     if (page >= TOTAL_PAGES - 1) return;
     const newPage = page + 1;
     setPage(newPage);
-    setSelectedId(CHAPTERS[newPage * CHAPTERS_PER_PAGE].id);
+    setSelectedId(chapters[newPage * CHAPTERS_PER_PAGE].id);
   };
 
   return (
@@ -104,6 +115,50 @@ export default function StoriesPage() {
             src="/images/stories/gradient-footer.png"
             style={{ height: '200px', objectFit: 'cover', transform: 'scaleY(-1)' }}
           />
+
+          {/* Locked chapter overlay — centered on screen */}
+          {!current.unlocked && (
+            <div
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              style={{ paddingBottom: '200px' }}
+            >
+              <div
+                style={{
+                  background: 'rgba(10, 5, 2, 0.72)',
+                  border: '2px solid #946b39',
+                  borderRadius: '16px',
+                  padding: '24px 40px',
+                  textAlign: 'center',
+                  maxWidth: '700px',
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: LORA,
+                    fontWeight: 700,
+                    color: '#fcd65a',
+                    fontSize: '28px',
+                    lineHeight: 1.5,
+                    margin: 0,
+                  }}
+                >
+                  Chương truyện này sẽ được mở khóa khi đạt Level {current.id}
+                </p>
+                <p
+                  style={{
+                    fontFamily: LORA,
+                    fontWeight: 400,
+                    color: '#c9a06a',
+                    fontSize: '20px',
+                    marginTop: '10px',
+                    marginBottom: 0,
+                  }}
+                >
+                  Level hiện tại: Level {userLevel}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Stories panel — unlocked chapters only */}
           {current.unlocked && (

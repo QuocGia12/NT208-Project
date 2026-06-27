@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { LobbyAnnouncementBar, LobbyTicker } from '@/components/app/lobby-ticker';
 import { SettingsModal } from '@/components/app/settings-modal';
 import { FixedAspectScene } from '@/components/layout/fixed-aspect-scene';
 import {
@@ -351,6 +352,9 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
                 );
               })}
             </nav>
+
+            <LobbyTicker />
+            <LobbyAnnouncementBar />
           </div>
         </FixedAspectScene>
 
