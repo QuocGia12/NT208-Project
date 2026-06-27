@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Baloo_2, Be_Vietnam_Pro, Lilita_One, Open_Sans, Playpen_Sans } from 'next/font/google';
+import { Baloo_2, Be_Vietnam_Pro, Lilita_One, Lora, Open_Sans, Playpen_Sans } from 'next/font/google';
 import type { ReactNode } from 'react';
 
 import { GlobalClickSfx } from '@/components/app/global-click-sfx';
@@ -33,6 +33,14 @@ const lilitaOne = Lilita_One({
   display: 'swap'
 });
 
+const lora = Lora({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-lora',
+  display: 'swap'
+});
+
 const playpenSans = Playpen_Sans({
   subsets: ['latin', 'vietnamese'],
   weight: ['400', '600', '700', '800'],
@@ -58,6 +66,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           beVietnamPro.variable,
           openSans.variable,
           lilitaOne.variable,
+          lora.variable,
           playpenSans.variable
         ].join(' ')}
       >

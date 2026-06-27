@@ -33,7 +33,8 @@ const UI_GAME_ASSETS = {
   btnShop: '/images/ui-game/btn-shop.png',
   btnFriends: '/images/ui-game/btn-friends.png',
   btnInbox: '/images/ui-game/btn-inbox.png',
-  btnBxh: '/images/ui-game/btn-bxh.png'
+  btnBxh: '/images/ui-game/btn-bxh.png',
+  btnStories: '/images/ui-game/btn-stories.png'
 } as const;
 
 type NavItem = {
@@ -62,6 +63,11 @@ const navItems: NavItem[] = [
     href: '/chat',
     label: 'INBOX',
     icon: UI_GAME_ASSETS.btnInbox
+  },
+  {
+    href: '/stories',
+    label: 'STORIES',
+    icon: UI_GAME_ASSETS.btnStories
   }
 ];
 
@@ -84,6 +90,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
   const isLobbyRoute = pathname === '/lobby' || pathname === '/';
   const isGameRoute = pathname.startsWith('/game/');
   const isMatchmakingRoute = pathname.startsWith('/matchmaking');
+  const isStoriesRoute = pathname.startsWith('/stories');
 
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
@@ -207,7 +214,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
     );
   }
 
-  if (isGameRoute || isMatchmakingRoute) {
+  if (isGameRoute || isMatchmakingRoute || isStoriesRoute) {
     return <>{children}</>;
   }
 
