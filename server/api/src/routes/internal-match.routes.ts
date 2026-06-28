@@ -8,7 +8,8 @@ const GAME_REWARD = {
   winnerCoins: 10,
   winnerGems: 1,
   winnerElo: 200,
-  loserCoins: 2
+  loserCoins: 2,
+  loserElo: 40   // ~1/5 of winner ELO — losers still progress, just slower
 } as const;
 
 const internalSecret = process.env.GAME_SERVER_INTERNAL_SECRET ?? 'dev_internal_secret_change_me';
@@ -67,7 +68,8 @@ internalMatchRouter.post('/reward', async (req, res) => {
       prisma.user.updateMany({
         where: { id: { in: existingLoserIds } },
         data: {
-          coins: { increment: GAME_REWARD.loserCoins }
+          coins: { increment: GAME_REWARD.loserCoins },
+          elo: { increment: GAME_REWARD.loserElo }
         }
       })
     ]);
@@ -85,7 +87,7 @@ internalMatchRouter.post('/reward', async (req, res) => {
           playerIds: existingLoserIds,
           coins: GAME_REWARD.loserCoins,
           gems: 0,
-          elo: 0
+          elo: GAME_REWARD.loserElo
         },
         skippedPlayerIds: allPlayerIds.filter((playerId) => !existingUserIds.has(playerId))
       }
