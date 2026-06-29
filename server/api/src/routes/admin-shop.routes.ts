@@ -3,6 +3,7 @@ import { Prisma, ShopItemType } from '@prisma/client';
 import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { unzipSync } from 'fflate';
 
 import { prisma } from '../lib/prisma';
 import { requireAdmin, requireAuth } from '../middleware/auth.middleware';
@@ -13,17 +14,71 @@ const SHOP_ITEM_TYPES = new Set<string>([
   ShopItemType.SKIN,
   ShopItemType.ITEM
 ]);
-const SKIN_TYPES = new Set(['FRAME']);
+const SKIN_TYPES = new Set(['FRAME', 'DICE', 'MAP']);
+const ITEM_TYPES = new Set(['STANDARD', 'COIN_PACK']);
 const DEFAULT_SKIN_TYPE = 'FRAME';
+const DEFAULT_ITEM_TYPE = 'STANDARD';
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_MAP_UPLOAD_BYTES = 20 * 1024 * 1024;
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'shop');
+const MAP_UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'shop', 'maps');
 const UPLOAD_URL_PATH = '/uploads/shop';
+const MAP_UPLOAD_URL_PATH = '/uploads/shop/maps';
 const IMAGE_EXTENSIONS: Record<string, string> = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
   'image/webp': 'webp',
   'image/gif': 'gif'
 };
+const MAP_ZODIAC_KEYS = [
+  'ty',
+  'suu',
+  'dan',
+  'mao',
+  'thin',
+  'ti',
+  'ngo',
+  'mui',
+  'than',
+  'dau',
+  'tuat',
+  'hoi'
+] as const;
+const MAP_REQUIRED_FILES = [
+  'add-card.png',
+  'ty.png',
+  'suu.png',
+  'dan.png',
+  'mao.png',
+  'thin.png',
+  'ti.png',
+  'ngo.png',
+  'mui.png',
+  'than.png',
+  'dau.png',
+  'tuat.png',
+  'hoi.png',
+  'preview.png'
+] as const;
+const MAP_ZODIAC_FILE_NAMES = {
+  ty: 'ty.png',
+  suu: 'suu.png',
+  dan: 'dan.png',
+  mao: 'mao.png',
+  thin: 'thin.png',
+  ti: 'ti.png',
+  ngo: 'ngo.png',
+  mui: 'mui.png',
+  than: 'than.png',
+  dau: 'dau.png',
+  tuat: 'tuat.png',
+  hoi: 'hoi.png'
+} as const;
+const ZIP_CONTENT_TYPES = new Set([
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/octet-stream'
+]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -83,23 +138,92 @@ const normalizeSkinType = (value: unknown) => {
   }
 
   if (!isString(value) || !SKIN_TYPES.has(value.toUpperCase())) {
-    throw new Error('skinType must be FRAME.');
+    throw new Error('skinType must be FRAME, DICE, or MAP.');
   }
 
   return value.toUpperCase();
 };
 
+const normalizeShopItemKind = (value: unknown) => {
+  if (value === undefined || value === null || value === '') {
+    return DEFAULT_ITEM_TYPE;
+  }
+
+  if (!isString(value) || !ITEM_TYPES.has(value.toUpperCase())) {
+    throw new Error('itemKind must be STANDARD or COIN_PACK.');
+  }
+
+  return value.toUpperCase();
+};
+
+const normalizeRewardCoins = (value: unknown) => {
+  const rewardCoins = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(rewardCoins) || rewardCoins <= 0) {
+    throw new Error('rewardCoins must be a positive integer.');
+  }
+
+  return rewardCoins;
+};
+
+const normalizeMapAssets = (value: unknown) => {
+  if (!isRecord(value)) {
+    throw new Error('Map skin metadata must include mapAssets.');
+  }
+
+  const previewImageUrl = normalizeRequiredString(value.previewImageUrl, 'mapAssets.previewImageUrl');
+  const addCardImageUrl = normalizeRequiredString(value.addCardImageUrl, 'mapAssets.addCardImageUrl');
+  if (!isRecord(value.zodiacBoxImageUrls)) {
+    throw new Error('mapAssets.zodiacBoxImageUrls must be an object.');
+  }
+
+  const zodiacBoxImageUrls = {} as Record<(typeof MAP_ZODIAC_KEYS)[number], string>;
+  for (const key of MAP_ZODIAC_KEYS) {
+    zodiacBoxImageUrls[key] = normalizeRequiredString(
+      value.zodiacBoxImageUrls[key],
+      `mapAssets.zodiacBoxImageUrls.${key}`
+    );
+  }
+
+  return {
+    previewImageUrl,
+    addCardImageUrl,
+    zodiacBoxImageUrls
+  } satisfies Prisma.InputJsonObject;
+};
+
 const normalizeItemMetadata = (
   type: ShopItemType,
   metadataValue: unknown,
-  skinTypeValue?: unknown
+  skinTypeValue?: unknown,
+  itemKindValue?: unknown
 ) => {
   if (type !== ShopItemType.SKIN) {
-    return normalizeMetadata(metadataValue);
+    const itemKind = normalizeShopItemKind(itemKindValue);
+    if (itemKind !== 'COIN_PACK') {
+      return metadataValue === undefined ? undefined : normalizeMetadata(metadataValue);
+    }
+
+    if (!isRecord(metadataValue)) {
+      throw new Error('COIN_PACK item requires metadata.');
+    }
+
+    const metadataItemKind = normalizeShopItemKind(metadataValue.itemType);
+    if (metadataItemKind !== 'COIN_PACK') {
+      throw new Error('COIN_PACK metadata itemType must be COIN_PACK.');
+    }
+
+    return {
+      itemType: 'COIN_PACK',
+      rewardCoins: normalizeRewardCoins(metadataValue.rewardCoins)
+    } satisfies Prisma.InputJsonObject;
   }
 
   const skinType = normalizeSkinType(skinTypeValue);
   if (metadataValue === undefined || metadataValue === null) {
+    if (skinType === 'MAP') {
+      throw new Error('MAP skin requires uploaded map metadata.');
+    }
+
     return { skinType } satisfies Prisma.InputJsonObject;
   }
 
@@ -108,7 +232,15 @@ const normalizeItemMetadata = (
   }
 
   if (metadataValue.skinType !== undefined && normalizeSkinType(metadataValue.skinType) !== skinType) {
-    throw new Error('Skin metadata skinType must be FRAME.');
+    throw new Error('Skin metadata skinType must match FRAME, DICE, or MAP.');
+  }
+
+  if (skinType === 'MAP') {
+    return {
+      ...metadataValue,
+      skinType,
+      mapAssets: normalizeMapAssets(metadataValue.mapAssets)
+    } as Prisma.InputJsonObject;
   }
 
   return {
@@ -142,6 +274,56 @@ const parseDataUrl = (value: unknown) => {
   };
 };
 
+const parseZipDataUrl = (value: unknown) => {
+  if (!isString(value)) {
+    throw new Error('dataUrl is required.');
+  }
+
+  const match = value.match(/^data:([^;]+);base64,([A-Za-z0-9+/=]+)$/);
+  if (!match || !ZIP_CONTENT_TYPES.has(match[1])) {
+    throw new Error('Upload must be a ZIP data URL.');
+  }
+
+  return {
+    contentType: match[1],
+    buffer: Buffer.from(match[2], 'base64')
+  };
+};
+
+const sanitizePathSegment = (value: string, fallback: string) => {
+  const sanitized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+
+  return sanitized || fallback;
+};
+
+const buildUploadUrl = (req: Request, relativePath: string) =>
+  `${getUploadOrigin(req)}${relativePath}`;
+
+const normalizeZipEntries = (buffer: Buffer) => {
+  const archive = unzipSync(new Uint8Array(buffer));
+  const normalizedEntries = new Map<string, Uint8Array>();
+
+  for (const [entryName, entryBuffer] of Object.entries(archive)) {
+    const normalizedName = path.basename(entryName).toLowerCase();
+    if (!normalizedName || normalizedName.startsWith('.')) {
+      continue;
+    }
+
+    if (normalizedEntries.has(normalizedName)) {
+      throw new Error(`Duplicate file in zip: ${normalizedName}`);
+    }
+
+    normalizedEntries.set(normalizedName, entryBuffer);
+  }
+
+  return normalizedEntries;
+};
+
 const badRequest = (message: string) => ({ error: message });
 
 adminShopRouter.use(requireAuth, requireAdmin);
@@ -168,7 +350,7 @@ adminShopRouter.post('/items', async (req, res) => {
   try {
     const body = req.body as Record<string, unknown>;
     const type = normalizeType(body.type);
-    const metadata = normalizeItemMetadata(type, body.metadata, body.skinType);
+    const metadata = normalizeItemMetadata(type, body.metadata, body.skinType, body.itemKind);
 
     const item = await prisma.shopItem.create({
       data: {
@@ -228,7 +410,7 @@ adminShopRouter.patch('/items/:id', async (req, res) => {
       data.isActive = body.isActive;
     }
     if (body.metadata !== undefined || body.skinType !== undefined || body.type !== undefined) {
-      const metadata = normalizeItemMetadata(nextType, body.metadata, body.skinType);
+      const metadata = normalizeItemMetadata(nextType, body.metadata, body.skinType, body.itemKind);
       if (metadata !== undefined) {
         data.metadata = metadata;
       }
@@ -341,6 +523,74 @@ adminShopRouter.post('/upload', async (req, res) => {
     }
 
     console.error('Admin upload shop image error:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
+adminShopRouter.post('/upload-map', async (req, res) => {
+  try {
+    const body = req.body as Record<string, unknown>;
+    const code = normalizeRequiredString(body.code, 'code');
+    const { buffer } = parseZipDataUrl(body.dataUrl);
+
+    if (buffer.length === 0 || buffer.length > MAX_MAP_UPLOAD_BYTES) {
+      return res.status(400).json(badRequest('Map zip must be between 1 byte and 20MB.'));
+    }
+
+    const entries = normalizeZipEntries(buffer);
+    const unexpectedFiles = [...entries.keys()].filter((fileName) => !MAP_REQUIRED_FILES.includes(fileName as typeof MAP_REQUIRED_FILES[number]));
+    if (unexpectedFiles.length > 0) {
+      return res.status(400).json(
+        badRequest(`Unexpected files in zip: ${unexpectedFiles.join(', ')}`)
+      );
+    }
+
+    const missingFiles = MAP_REQUIRED_FILES.filter((fileName) => !entries.has(fileName));
+    if (missingFiles.length > 0) {
+      return res.status(400).json(
+        badRequest(`Missing required map files: ${missingFiles.join(', ')}`)
+      );
+    }
+
+    const folderName = sanitizePathSegment(code, 'map-skin');
+    const targetDir = path.join(MAP_UPLOAD_DIR, folderName);
+    await fs.rm(targetDir, { recursive: true, force: true });
+    await fs.mkdir(targetDir, { recursive: true });
+
+    for (const fileName of MAP_REQUIRED_FILES) {
+      const fileBuffer = entries.get(fileName);
+      if (!fileBuffer || fileBuffer.byteLength === 0) {
+        return res.status(400).json(badRequest(`Invalid or empty file: ${fileName}`));
+      }
+
+      await fs.writeFile(path.join(targetDir, fileName), Buffer.from(fileBuffer));
+    }
+
+    const baseRelativePath = `${MAP_UPLOAD_URL_PATH}/${folderName}`;
+    const metadata = {
+      skinType: 'MAP',
+      mapAssets: {
+        previewImageUrl: buildUploadUrl(req, `${baseRelativePath}/preview.png`),
+        addCardImageUrl: buildUploadUrl(req, `${baseRelativePath}/add-card.png`),
+        zodiacBoxImageUrls: Object.fromEntries(
+          MAP_ZODIAC_KEYS.map((key) => [
+            key,
+            buildUploadUrl(req, `${baseRelativePath}/${MAP_ZODIAC_FILE_NAMES[key]}`)
+          ])
+        )
+      }
+    } satisfies Prisma.InputJsonObject;
+
+    return res.status(201).json({
+      imageUrl: buildUploadUrl(req, `${baseRelativePath}/preview.png`),
+      metadata
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json(badRequest(error.message));
+    }
+
+    console.error('Admin upload map skin error:', error);
     return res.status(500).json({ error: 'Internal server error.' });
   }
 });

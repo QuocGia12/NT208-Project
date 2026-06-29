@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -37,7 +37,7 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
   const [isGuideBookOpen, setIsGuideBookOpen] = useState(false);
   const [socketReady, setSocketReady] = useState(gameSocketClient.isConnected());
   const [status, setStatus] = useState(
-    gameSocketClient.isConnected() ? 'Connected to game server.' : 'Connecting to game server...'
+    gameSocketClient.isConnected() ? 'Đã kết nối máy chủ game.' : 'Đang kết nối máy chủ game...'
   );
   const [routeMatch, setRouteMatch] = useState<GameMatchFound | null>(() =>
     gameSocketClient.getMatchForRoom(roomId.trim())
@@ -60,17 +60,17 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
 
     const handleConnect = () => {
       setSocketReady(true);
-      setStatus('Connected to game server.');
+      setStatus('Đã kết nối máy chủ game.');
     };
 
     const handleDisconnect = () => {
       setSocketReady(false);
-      setStatus('Disconnected. Reconnecting...');
+      setStatus('Mất kết nối. Đang kết nối lại...');
     };
 
     const handleGameError = (payload: WrappedPayload<GameSocketError>) => {
       const data = unwrapPayload(payload);
-      setStatus(data?.message ?? 'Game server returned an error.');
+      setStatus(data?.message ?? 'Máy chủ game trả về lỗi.');
     };
 
     const handleMatchFound = (payload: WrappedPayload<GameMatchFound>) => {
@@ -106,9 +106,9 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
     return (
       <div className="phaser-room-shell">
         <div className="game-route-loading">
-          <p className="game-route-loading-title moba-heading">Preparing match...</p>
+          <p className="game-route-loading-title moba-heading">Đang chuẩn bị trận...</p>
           <p className="game-route-loading-subtitle">
-            Missing room or player session. Please return to lobby and start a match again.
+            Thiếu phòng hoặc phiên người chơi. Hãy quay về lobby và bắt đầu trận lại.
           </p>
           <button className="game-route-back-btn" onClick={handleBackToLobby} type="button">
             Trở về lobby
@@ -125,10 +125,10 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
           Trở về lobby
         </button>
         <div className="game-route-meta">
-          <span>Room: {normalizedRoomId}</span>
+          <span>Phòng: {normalizedRoomId}</span>
           <span>{status}</span>
           {!hasActiveMatchForRoute ? (
-            <span className="game-route-warning">Waiting for active match session...</span>
+            <span className="game-route-warning">Đang chờ phiên trận đấu...</span>
           ) : null}
         </div>
       </div>
@@ -137,14 +137,19 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
         {socketReady ? (
           <div className="relative h-full w-full overflow-hidden bg-[#050816]">
             <div className="absolute inset-0">
-              <PhaserGame roomId={normalizedRoomId} playerId={matchedPlayerId} />
+              <PhaserGame
+                roomId={normalizedRoomId}
+                playerId={matchedPlayerId}
+                dicePanelImageUrl={user?.equippedDicePanelImageUrl}
+                mapSkinAssets={user?.equippedMapAssets}
+              />
             </div>
             <button
               className="game-route-mobile-back-btn"
               onClick={handleBackToLobby}
               type="button"
             >
-              Lobby
+              Về lobby
             </button>
             <GuideBookButton
               alt="Mở hướng dẫn"
@@ -160,11 +165,12 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
           </div>
         ) : (
           <div className="game-route-loading">
-            <p className="game-route-loading-title moba-heading">Connecting...</p>
-            <p className="game-route-loading-subtitle">Opening realtime game session.</p>
+            <p className="game-route-loading-title moba-heading">Đang kết nối...</p>
+            <p className="game-route-loading-subtitle">Đang mở phiên game realtime.</p>
           </div>
         )}
       </div>
     </div>
   );
 };
+

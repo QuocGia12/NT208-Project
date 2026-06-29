@@ -3,12 +3,14 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import type { AuthUser } from '@/lib/types/auth';
+import type { AuthUser, LoginStreakStatus } from '@/lib/types/auth';
 
 type AuthState = {
+  loginStreak: LoginStreakStatus | null;
   token: string | null;
   user: AuthUser | null;
-  setSession: (token: string, user: AuthUser) => void;
+  setLoginStreak: (streak: LoginStreakStatus | null) => void;
+  setSession: (token: string, user: AuthUser, loginStreak?: LoginStreakStatus | null) => void;
   updateUser: (user: AuthUser) => void;
   clearSession: () => void;
 };
@@ -16,11 +18,13 @@ type AuthState = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
+      loginStreak: null,
       token: null,
       user: null,
-      setSession: (token, user) => set({ token, user }),
+      setLoginStreak: (loginStreak) => set((state) => ({ ...state, loginStreak })),
+      setSession: (token, user, loginStreak = null) => set({ token, user, loginStreak }),
       updateUser: (user) => set((state) => ({ ...state, user })),
-      clearSession: () => set({ token: null, user: null })
+      clearSession: () => set({ loginStreak: null, token: null, user: null })
     }),
     {
       name: 'zodiac-auth-storage',

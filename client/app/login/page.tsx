@@ -47,9 +47,9 @@ export default function LoginPage() {
         password
       });
 
-      setSession(response.token, response.user);
+      setSession(response.token, response.user, response.streak);
       setPassword('');
-      router.replace('/lobby');
+      router.replace('/lobby-streak');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Không thể đăng nhập vào lúc này. Vui lòng thử lại sau.');
     } finally {

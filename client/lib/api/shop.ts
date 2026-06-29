@@ -1,5 +1,6 @@
 import type {
   AdminShopUploadResponse,
+  AdminShopMapUploadResponse,
   AdminShopItemResponse,
   AdminShopItemsResponse,
   ApplyShopItemResponse,
@@ -100,6 +101,19 @@ export const uploadAdminShopImage = async (
   }
 ): Promise<AdminShopUploadResponse> =>
   requestJson<AdminShopUploadResponse>(token, '/api/admin/shop/upload', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+export const uploadAdminShopMap = async (
+  token: string,
+  payload: {
+    code: string;
+    fileName: string;
+    dataUrl: string;
+  }
+): Promise<AdminShopMapUploadResponse> =>
+  requestJson<AdminShopMapUploadResponse>(token, '/api/admin/shop/upload-map', {
     method: 'POST',
     body: JSON.stringify(payload)
   });

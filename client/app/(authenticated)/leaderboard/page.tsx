@@ -15,9 +15,9 @@ const topRankClass: Record<number, string> = {
 };
 
 const rankMedalLabel: Record<number, string> = {
-  1: 'Gold Crown',
-  2: 'Silver Crown',
-  3: 'Bronze Crown'
+  1: 'Vương miện vàng',
+  2: 'Vương miện bạc',
+  3: 'Vương miện đồng'
 };
 
 const topBadgeByRank: Record<number, string> = {
@@ -62,7 +62,7 @@ export default function LeaderboardPage() {
         setEntries(response.leaderboard);
       } catch (error) {
         setErrorMessage(
-          error instanceof Error ? error.message : 'Unable to load leaderboard.'
+          error instanceof Error ? error.message : 'Không thể tải bảng xếp hạng.'
         );
       } finally {
         setIsLoading(false);
@@ -86,13 +86,13 @@ export default function LeaderboardPage() {
         <div className="panel-content space-y-4 px-[8%] py-[4%]">
           <header className="leaderboard-header-panel animate-fade-in-up">
             <p className="moba-heading text-xs uppercase tracking-[0.24em] text-cyan-300/90">
-              Ranked Arena
+              ĐẤU TRƯỜNG XẾP HẠNG
             </p>
             <h1 className="moba-heading mt-1 text-2xl uppercase tracking-[0.12em] text-amber-100">
-              Top 50 Commanders
+              Top 50 cao thủ
             </h1>
             <p className="mt-2 text-sm text-slate-300/85">
-              Climb the Elo ladder and earn your place among the elite zodiac warriors.
+              Leo bảng Elo và ghi danh trong nhóm cao thủ 12 con giáp.
             </p>
           </header>
 
@@ -102,11 +102,11 @@ export default function LeaderboardPage() {
 
           {isLoading ? (
             <div className="empty-state">
-              <p className="text-sm text-slate-300/90">Loading leaderboard...</p>
+              <p className="text-sm text-slate-300/90">Đang tải bảng xếp hạng...</p>
             </div>
           ) : entries.length === 0 ? (
             <div className="empty-state">
-              <p className="text-sm text-slate-300/90">No leaderboard entries available yet.</p>
+              <p className="text-sm text-slate-300/90">Chưa có dữ liệu bảng xếp hạng.</p>
             </div>
           ) : (
             <>
@@ -121,7 +121,7 @@ export default function LeaderboardPage() {
                       style={{ animationDelay: `${entry.rank * 80}ms` }}
                     >
                       <p className="moba-heading text-[0.68rem] uppercase tracking-[0.2em] text-slate-300">
-                        {rankMedalLabel[entry.rank] ?? `Rank ${entry.rank}`}
+                        {rankMedalLabel[entry.rank] ?? `Hạng ${entry.rank}`}
                       </p>
                       <p className="moba-heading mt-1 text-3xl text-amber-100">#{entry.rank}</p>
 
@@ -133,7 +133,7 @@ export default function LeaderboardPage() {
                         <div className="mt-3 flex items-center justify-center">
                           <Image
                             src={topBadgeSrc}
-                            alt={`Top ${entry.rank} badge`}
+                            alt={`Huy hiệu top ${entry.rank}`}
                             width={80}
                             height={80}
                             className="leaderboard-top-rank-badge"
@@ -157,8 +157,8 @@ export default function LeaderboardPage() {
                 style={{ animationDelay: '220ms' }}
               >
                 <div className="leaderboard-table-head">
-                  <span>Rank</span>
-                  <span>Player</span>
+                  <span>Hạng</span>
+                  <span>Người chơi</span>
                   <span className="text-right">Elo</span>
                 </div>
 
@@ -178,7 +178,7 @@ export default function LeaderboardPage() {
                           {topBadgeSrc ? (
                             <Image
                               src={topBadgeSrc}
-                              alt={`Top ${entry.rank} badge`}
+                              alt={`Huy hiệu top ${entry.rank}`}
                               width={28}
                               height={28}
                               className="leaderboard-row-rank-badge"

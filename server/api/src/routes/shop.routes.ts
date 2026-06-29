@@ -19,6 +19,15 @@ class HttpError extends Error {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+const getSkinType = (item: { type: ShopItemType; metadata: Prisma.JsonValue | null }) => {
+  if (item.type !== ShopItemType.SKIN) return null;
+  if (!isRecord(item.metadata) || typeof item.metadata.skinType !== 'string') return 'FRAME';
+  const normalized = item.metadata.skinType.toUpperCase();
+  if (normalized === 'DICE') return 'DICE';
+  if (normalized === 'MAP') return 'MAP';
+  return 'FRAME';
+};
+
 const getOwnedQuantityMap = async (userId: string) => {
   const inventory = await prisma.userInventory.findMany({
     where: { userId },
@@ -32,9 +41,28 @@ const getOwnedQuantityMap = async (userId: string) => {
 };
 
 const isFrameSkin = (item: { type: ShopItemType; metadata: Prisma.JsonValue | null }) => {
-  if (item.type !== ShopItemType.SKIN) return false;
-  if (!isRecord(item.metadata) || typeof item.metadata.skinType !== 'string') return true;
-  return item.metadata.skinType.toUpperCase() === 'FRAME';
+  return getSkinType(item) === 'FRAME';
+};
+
+const isDiceSkin = (item: { type: ShopItemType; metadata: Prisma.JsonValue | null }) => {
+  return getSkinType(item) === 'DICE';
+};
+
+const isMapSkin = (item: { type: ShopItemType; metadata: Prisma.JsonValue | null }) => {
+  return getSkinType(item) === 'MAP';
+};
+
+const getCoinPackRewardCoins = (item: {
+  type: ShopItemType;
+  metadata: Prisma.JsonValue | null;
+}) => {
+  if (item.type !== ShopItemType.ITEM || !isRecord(item.metadata)) return null;
+  if (item.metadata.itemType !== 'COIN_PACK') return null;
+
+  const rewardCoins = Number(item.metadata.rewardCoins);
+  if (!Number.isInteger(rewardCoins) || rewardCoins <= 0) return null;
+
+  return rewardCoins;
 };
 
 shopRouter.get('/items', requireAuth, async (req: AuthenticatedRequest, res) => {
@@ -63,7 +91,9 @@ shopRouter.get('/items', requireAuth, async (req: AuthenticatedRequest, res) => 
       prisma.user.findUnique({
         where: { id: userId },
         select: {
-          equippedFrameItemId: true
+          equippedFrameItemId: true,
+          equippedDiceItemId: true,
+          equippedMapItemId: true
         }
       })
     ]);
@@ -72,7 +102,10 @@ shopRouter.get('/items', requireAuth, async (req: AuthenticatedRequest, res) => 
       items: items.map((item) => ({
         ...item,
         ownedQuantity: ownedQuantityMap.get(item.id) ?? 0,
-        isApplied: item.id === user?.equippedFrameItemId
+        isApplied:
+          (isFrameSkin(item) && item.id === user?.equippedFrameItemId)
+          || (isDiceSkin(item) && item.id === user?.equippedDiceItemId)
+          || (isMapSkin(item) && item.id === user?.equippedMapItemId)
       }))
     });
   } catch (error) {
@@ -129,6 +162,16 @@ shopRouter.post('/buy', requireAuth, async (req: AuthenticatedRequest, res) => {
             select: {
               imageUrl: true
             }
+          },
+          equippedDiceItem: {
+            select: {
+              imageUrl: true
+            }
+          },
+          equippedMapItem: {
+            select: {
+              metadata: true
+            }
           }
         }
       });
@@ -159,6 +202,44 @@ shopRouter.post('/buy', requireAuth, async (req: AuthenticatedRequest, res) => {
         throw new HttpError(400, 'Not enough coins or gems.');
       }
 
+      const coinPackRewardCoins = getCoinPackRewardCoins(item);
+      if (coinPackRewardCoins !== null) {
+        const updatedUser = await tx.user.update({
+          where: { id: userId },
+          data: {
+            coins: {
+              increment: coinPackRewardCoins - item.priceCoins
+            },
+            gems: { decrement: item.priceGems }
+          },
+          include: {
+            equippedFrameItem: {
+              select: {
+                imageUrl: true
+              }
+            },
+            equippedDiceItem: {
+              select: {
+                imageUrl: true
+              }
+            },
+            equippedMapItem: {
+              select: {
+                metadata: true
+              }
+            }
+          }
+        });
+
+        return {
+          item,
+          inventory: null,
+          user: updatedUser,
+          alreadyOwned: false,
+          rewardCoins: coinPackRewardCoins
+        };
+      }
+
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: {
@@ -169,6 +250,16 @@ shopRouter.post('/buy', requireAuth, async (req: AuthenticatedRequest, res) => {
           equippedFrameItem: {
             select: {
               imageUrl: true
+            }
+          },
+          equippedDiceItem: {
+            select: {
+              imageUrl: true
+            }
+          },
+          equippedMapItem: {
+            select: {
+              metadata: true
             }
           }
         }
@@ -195,7 +286,8 @@ shopRouter.post('/buy', requireAuth, async (req: AuthenticatedRequest, res) => {
         item,
         inventory,
         user: updatedUser,
-        alreadyOwned: false
+        alreadyOwned: false,
+        rewardCoins: null
       };
     });
 
@@ -210,7 +302,9 @@ shopRouter.post('/buy', requireAuth, async (req: AuthenticatedRequest, res) => {
         cardName: result.item.name,
         priceCoins: result.item.priceCoins,
         priceGems: result.item.priceGems,
-        ownedQuantity: result.inventory.quantity
+        ownedQuantity: result.inventory?.quantity ?? 0,
+        itemKind: result.rewardCoins ? 'COIN_PACK' : 'STANDARD',
+        ...(result.rewardCoins ? { rewardCoins: result.rewardCoins } : {})
       }
     });
   } catch (error) {
@@ -252,19 +346,34 @@ shopRouter.post('/apply', requireAuth, async (req: AuthenticatedRequest, res) =>
         throw new HttpError(404, 'You do not own this shop item.');
       }
 
-      if (!isFrameSkin(inventory.item)) {
-        throw new HttpError(400, 'Only frame skins can be applied.');
+      const skinType = getSkinType(inventory.item);
+      if (!skinType) {
+        throw new HttpError(400, 'Only skin items can be applied.');
       }
 
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: {
-          equippedFrameItemId: inventory.item.id
+          ...(skinType === 'FRAME'
+            ? { equippedFrameItemId: inventory.item.id }
+            : skinType === 'DICE'
+              ? { equippedDiceItemId: inventory.item.id }
+              : { equippedMapItemId: inventory.item.id })
         },
         include: {
           equippedFrameItem: {
             select: {
               imageUrl: true
+            }
+          },
+          equippedDiceItem: {
+            select: {
+              imageUrl: true
+            }
+          },
+          equippedMapItem: {
+            select: {
+              metadata: true
             }
           }
         }
@@ -277,7 +386,12 @@ shopRouter.post('/apply', requireAuth, async (req: AuthenticatedRequest, res) =>
     });
 
     return res.status(200).json({
-      message: 'Frame applied.',
+      message:
+        isFrameSkin(result.item)
+          ? 'Frame applied.'
+          : isDiceSkin(result.item)
+            ? 'Dice panel applied.'
+            : 'Map applied.',
       user: toSafeUser(result.user),
       item: result.item
     });

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 
+import { buildLoginStreakStatus, claimLoginStreakReward } from '../lib/login-streak';
 import { prisma } from '../lib/prisma';
 import {
   AuthenticatedRequest,
@@ -121,6 +122,55 @@ userRouter.get('/me', requireAuth, async (req, res) => {
   }
 });
 
+userRouter.get('/me/login-streak', requireAuth, async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId!;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        lastLoginStreakDate: true,
+        loginStreakDay: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    return res.status(200).json({
+      streak: buildLoginStreakStatus(user)
+    });
+  } catch (error) {
+    console.error('Get login streak error:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
+userRouter.post('/me/login-streak/claim', requireAuth, async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId!;
+
+    const result = await prisma.$transaction((tx) => claimLoginStreakReward(tx, userId));
+
+    return res.status(200).json({
+      reward: result.streak.todayReward,
+      streak: result.streak,
+      user: toSafeUser(result.user)
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Login streak already claimed today.') {
+      return res.status(400).json({ error: error.message });
+    }
+
+    console.error('Claim login streak error:', error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
 // PATCH /api/users/me/password — change own password
 userRouter.patch('/me/password', requireAuth, async (req, res) => {
   try {
@@ -222,6 +272,16 @@ userRouter.patch('/me/avatar', requireAuth, async (req, res) => {
         equippedFrameItem: {
           select: {
             imageUrl: true
+          }
+        },
+        equippedDiceItem: {
+          select: {
+            imageUrl: true
+          }
+        },
+        equippedMapItem: {
+          select: {
+            metadata: true
           }
         }
       }

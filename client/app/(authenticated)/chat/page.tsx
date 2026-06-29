@@ -86,7 +86,7 @@ export default function ChatPage() {
       });
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to load chat conversations.'
+        error instanceof Error ? error.message : 'Không thể tải cuộc trò chuyện.'
       );
     } finally {
       setIsLoadingConversations(false);
@@ -164,7 +164,7 @@ export default function ChatPage() {
 
         setErrorMessage(null);
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : 'Unable to load messages.');
+        setErrorMessage(error instanceof Error ? error.message : 'Không thể tải tin nhắn.');
       } finally {
         if (!options?.silent) {
           setIsLoadingMessages(false);
@@ -231,7 +231,7 @@ export default function ChatPage() {
     const content = draft.trim();
 
     if (content.length === 0) {
-      setErrorMessage('Message cannot be empty.');
+      setErrorMessage('Tin nhắn không được để trống.');
       return;
     }
 
@@ -243,11 +243,11 @@ export default function ChatPage() {
       setMessages((prev) => dedupeMessages([...prev, response.message]));
       setDraft('');
       setErrorMessage(null);
-      setSuccessMessage('Message sent.');
+      setSuccessMessage('Đã gửi tin nhắn.');
       window.setTimeout(() => setSuccessMessage(null), 1800);
       void loadConversations();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to send message.');
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể gửi tin nhắn.');
     } finally {
       setIsSending(false);
     }
@@ -278,21 +278,21 @@ export default function ChatPage() {
               style={{ animationDelay: '70ms' }}
             >
               <h2 className="moba-heading text-xs uppercase tracking-[0.14em] text-cyan-200">
-                Friends
+                BẠN BÈ
               </h2>
 
               {isLoadingConversations ? (
-                <p className="mt-4 text-sm text-slate-300/80">Loading conversations...</p>
+                <p className="mt-4 text-sm text-slate-300/80">Đang tải cuộc trò chuyện...</p>
               ) : errorMessage ? (
                 <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-gradient-to-br from-cyan-900/55 to-blue-900/35 p-6 text-center">
                   <p className="text-sm text-slate-300/90">
-                    Unable to load your friend conversations right now.
+                    Chưa thể tải cuộc trò chuyện bạn bè lúc này.
                   </p>
                 </div>
               ) : conversations.length === 0 ? (
                 <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-gradient-to-br from-cyan-900/55 to-blue-900/35 p-6 text-center">
                   <p className="text-sm text-slate-300/90">
-                    You have no accepted friends to chat with yet.
+                    Bạn chưa có bạn bè để trò chuyện.
                   </p>
                 </div>
               ) : (
@@ -300,8 +300,8 @@ export default function ChatPage() {
                   {conversations.map((conversation) => {
                     const isActive = conversation.friend.id === selectedFriendId;
                     const preview = conversation.lastMessage
-                      ? `${conversation.lastMessage.isOwnMessage ? 'You: ' : ''}${conversation.lastMessage.content}`
-                      : 'No messages yet';
+                      ? `${conversation.lastMessage.isOwnMessage ? 'Bạn: ' : ''}${conversation.lastMessage.content}`
+                      : 'Chưa có tin nhắn';
 
                     return (
                       <button
@@ -333,13 +333,13 @@ export default function ChatPage() {
             <div className="chat-right-column space-y-4">
               <header className="friends-header-panel animate-fade-in-up">
                 <p className="moba-heading text-xs uppercase tracking-[0.24em] text-cyan-300/90">
-                  Friend Chat
+                  CHAT BẠN BÈ
                 </p>
                 <h1 className="moba-heading mt-1 text-2xl uppercase tracking-[0.12em] text-amber-100">
-                  Squad Messenger
+                  Hộp thư đồng đội
                 </h1>
                 <p className="mt-2 text-sm text-slate-300/85">
-                  Chat is available only with accepted friends.
+                  Chỉ có thể trò chuyện với bạn bè đã chấp nhận.
                 </p>
               </header>
 
@@ -359,7 +359,7 @@ export default function ChatPage() {
               >
                 {!selectedConversation ? (
                   <div className="flex h-full min-h-[260px] items-center justify-center rounded-2xl border border-cyan-300/35 bg-gradient-to-br from-cyan-900/55 to-blue-900/35 p-6 text-center">
-                    <p className="text-sm text-slate-300/90">Select a friend to start chatting.</p>
+                    <p className="text-sm text-slate-300/90">Chọn một người bạn để bắt đầu trò chuyện.</p>
                   </div>
                 ) : (
                   <div className="flex h-full min-h-0 flex-col">
@@ -368,7 +368,7 @@ export default function ChatPage() {
                         <p className="text-sm font-bold uppercase tracking-[0.08em] text-amber-100">
                           {selectedConversation.friend.username}
                         </p>
-                        <p className="text-[0.68rem] text-slate-400">Friend-only private chat</p>
+                        <p className="text-[0.68rem] text-slate-400">Trò chuyện riêng với bạn bè</p>
                       </div>
                       {nextCursor ? (
                         <button
@@ -377,7 +377,7 @@ export default function ChatPage() {
                           onClick={handleLoadOlder}
                           type="button"
                         >
-                          {isLoadingOlder ? 'Loading...' : 'Load Older'}
+                          {isLoadingOlder ? 'Đang tải...' : 'Tải tin cũ'}
                         </button>
                       ) : null}
                     </div>
@@ -387,10 +387,10 @@ export default function ChatPage() {
                       ref={messageListRef}
                     >
                       {isLoadingMessages ? (
-                        <p className="text-sm text-slate-300/80">Loading messages...</p>
+                        <p className="text-sm text-slate-300/80">Đang tải tin nhắn...</p>
                       ) : messages.length === 0 ? (
                         <p className="text-sm text-slate-300/80">
-                          No messages yet. Say hi to {selectedConversation.friend.username}.
+                          Chưa có tin nhắn. Hãy chào {selectedConversation.friend.username}.
                         </p>
                       ) : (
                         messages.map((message) => (
@@ -421,7 +421,7 @@ export default function ChatPage() {
                         className="moba-input"
                         maxLength={1000}
                         onChange={(event) => setDraft(event.target.value)}
-                        placeholder="Type your message..."
+                        placeholder="Nhập tin nhắn..."
                         value={draft}
                       />
                       <button
@@ -429,7 +429,7 @@ export default function ChatPage() {
                         disabled={isSending}
                         type="submit"
                       >
-                        {isSending ? 'Sending...' : 'Send'}
+                        {isSending ? 'Đang gửi...' : 'Gửi'}
                       </button>
                     </form>
                   </div>

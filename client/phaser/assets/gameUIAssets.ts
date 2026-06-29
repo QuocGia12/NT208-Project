@@ -1,4 +1,5 @@
 ﻿import * as Phaser from 'phaser';
+import type { EquippedMapAssets } from '@/lib/types/auth';
 import { CardType, ZodiacName } from '@/types/game';
 
 type AssetDef = {
@@ -6,13 +7,32 @@ type AssetDef = {
   path: string;
 };
 
+export const DEFAULT_DICE_PANEL_PATH = '/figma-game-ui/dice-display.png';
+export const DEFAULT_BOARD_BOX_ASSET_PATHS = {
+  addCard: '/game-ui/boxes/box-add-card.svg',
+  zodiacBySlug: {
+    ty: '/game-ui/boxes/box-tys.svg',
+    suu: '/game-ui/boxes/box-suu.svg',
+    dan: '/game-ui/boxes/box-dan.svg',
+    mao: '/game-ui/boxes/box-mao.svg',
+    thin: '/game-ui/boxes/box-thin.svg',
+    ti: '/game-ui/boxes/box-tyj.svg',
+    ngo: '/game-ui/boxes/box-ngo.svg',
+    mui: '/game-ui/boxes/box-mui.svg',
+    than: '/game-ui/boxes/box-than.svg',
+    dau: '/game-ui/boxes/box-dau.svg',
+    tuat: '/game-ui/boxes/box-tuat.svg',
+    hoi: '/game-ui/boxes/box-hoi.svg',
+  } as const,
+} as const;
+
 export const GAME_UI_IMAGE_ASSETS: AssetDef[] = [
   { key: 'ui-background-main', path: '/figma-game-ui/background-main.png' },
   { key: 'ui-button-skip', path: '/game-ui/buttons/button-skip.svg' },
   { key: 'ui-board-frame', path: '/figma-game-ui/board-main-table.png' },
   { key: 'ui-card-panel-frame', path: '/figma-game-ui/card-panel.png' },
   { key: 'ui-movement-pad', path: '/figma-game-ui/movement-pad.png' },
-  { key: 'ui-dice-panel', path: '/figma-game-ui/dice-display.png' },
+  { key: 'ui-dice-panel', path: DEFAULT_DICE_PANEL_PATH },
   { key: 'ui-dice-bg', path: '/game-ui/dice/dice-bg.svg' },
   { key: 'ui-dice-face-6', path: '/game-ui/dice/dice-face-6.svg' },
   { key: 'ui-player-bg-normal', path: '/game-ui/player-panels/panel-normal-background.svg' },
@@ -83,8 +103,47 @@ export const GAME_UI_IMAGE_ASSETS: AssetDef[] = [
   { key: 'ui-piece-hoi', path: '/game-ui/pieces/Piece_Hoi.svg' },
 ];
 
-export const preloadGameUIAssets = (scene: Phaser.Scene): void => {
+export const preloadGameUIAssets = (
+  scene: Phaser.Scene,
+  options?: {
+    dicePanelImageUrl?: string | null;
+    mapSkinAssets?: EquippedMapAssets | null;
+  }
+): void => {
+  const dicePanelImageUrl = options?.dicePanelImageUrl?.trim() || DEFAULT_DICE_PANEL_PATH;
+  const mapSkinAssets = options?.mapSkinAssets ?? null;
+
+  if (scene.textures.exists('ui-dice-panel')) {
+    scene.textures.remove('ui-dice-panel');
+  }
+  scene.load.image('ui-dice-panel', dicePanelImageUrl);
+
+  const overrideBoardKeys = new Set<string>([BOARD_BOX_TEXTURE_KEYS.addCard]);
+  if (scene.textures.exists(BOARD_BOX_TEXTURE_KEYS.addCard)) {
+    scene.textures.remove(BOARD_BOX_TEXTURE_KEYS.addCard);
+  }
+  scene.load.image(
+    BOARD_BOX_TEXTURE_KEYS.addCard,
+    mapSkinAssets?.addCardImageUrl?.trim() || DEFAULT_BOARD_BOX_ASSET_PATHS.addCard
+  );
+
+  Object.entries(BOARD_BOX_TEXTURE_KEYS.zodiacBySlug).forEach(([slug, textureKey]) => {
+    overrideBoardKeys.add(textureKey);
+    if (scene.textures.exists(textureKey)) {
+      scene.textures.remove(textureKey);
+    }
+
+    const customPath =
+      mapSkinAssets?.zodiacBoxImageUrls?.[slug as keyof EquippedMapAssets['zodiacBoxImageUrls']]?.trim();
+    const defaultPath =
+      DEFAULT_BOARD_BOX_ASSET_PATHS.zodiacBySlug[slug as keyof typeof DEFAULT_BOARD_BOX_ASSET_PATHS.zodiacBySlug];
+    scene.load.image(textureKey, customPath || defaultPath);
+  });
+
   GAME_UI_IMAGE_ASSETS.forEach((asset) => {
+    if (asset.key === 'ui-dice-panel' || overrideBoardKeys.has(asset.key)) {
+      return;
+    }
     if (!scene.textures.exists(asset.key)) {
       scene.load.image(asset.key, asset.path);
     }

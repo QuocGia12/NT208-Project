@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { applyShopItem, buyShopItem, fetchShopItems } from '@/lib/api/shop';
-import type { ShopItem, ShopItemType } from '@/lib/types/shop';
+import type { ShopItem, ShopItemType, SkinType } from '@/lib/types/shop';
 import { useAuthStore } from '@/store/auth-store';
 
 const itemCardClass: Record<ShopItemType, string> = {
@@ -30,12 +30,30 @@ const typeLabels: Record<ShopItemType, string> = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const getSkinTypeLabel = (metadata: unknown) => {
+const getSkinType = (metadata: unknown): SkinType => {
   if (isRecord(metadata) && typeof metadata.skinType === 'string') {
-    return metadata.skinType.toUpperCase() === 'FRAME' ? 'FRAME' : metadata.skinType.toUpperCase();
+    const normalized = metadata.skinType.toUpperCase();
+    if (normalized === 'DICE') return 'DICE';
+    if (normalized === 'MAP') return 'MAP';
   }
 
   return 'FRAME';
+};
+
+const getSkinTypeLabel = (metadata: unknown) => {
+  const skinType = getSkinType(metadata);
+  if (skinType === 'DICE') return 'XÚC XẮC';
+  if (skinType === 'MAP') return 'BẢN ĐỒ';
+  return 'FRAME';
+};
+
+const isCoinPack = (metadata: unknown) =>
+  isRecord(metadata) && metadata.itemType === 'COIN_PACK';
+
+const getCoinPackRewardCoins = (metadata: unknown) => {
+  if (!isRecord(metadata)) return 0;
+  const rewardCoins = Number(metadata.rewardCoins);
+  return Number.isInteger(rewardCoins) && rewardCoins > 0 ? rewardCoins : 0;
 };
 
 const sortItems = (items: ShopItem[]) =>
@@ -98,8 +116,8 @@ export default function ShopPage() {
   );
 
   const currencyText = useMemo(() => {
-    if (!user) return 'Coins 0 | Gems 0';
-    return `Coins ${user.coins.toLocaleString()} | Gems ${user.gems.toLocaleString()}`;
+    if (!user) return 'Vàng 0 | Ngọc 0';
+    return `Vàng ${user.coins.toLocaleString()} | Ngọc ${user.gems.toLocaleString()}`;
   }, [user]);
 
   const handleBuy = async (item: ShopItem) => {
@@ -118,11 +136,17 @@ export default function ShopPage() {
             : current
         )
       );
-      setSuccessMessage(
-        response.purchase.ownedQuantity > item.ownedQuantity
-          ? `Đã mua ${response.purchase.itemName}.`
-          : `${response.purchase.itemName} đã có trong túi đồ của bạn.`
-      );
+      if (response.purchase.rewardCoins) {
+        setSuccessMessage(
+          `Đã mua ${response.purchase.itemName} và nhận ${response.purchase.rewardCoins.toLocaleString()} Vàng.`
+        );
+      } else {
+        setSuccessMessage(
+          response.purchase.ownedQuantity > item.ownedQuantity
+            ? `Đã mua ${response.purchase.itemName}.`
+            : `${response.purchase.itemName} đã có trong túi đồ của bạn.`
+        );
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Không thể mua vật phẩm.');
     } finally {
@@ -138,17 +162,24 @@ export default function ShopPage() {
 
     try {
       const response = await applyShopItem(token, item.id);
+      const appliedSkinType = getSkinType(item.metadata);
       updateUser(response.user);
       setItems((prev) =>
         prev.map((current) =>
-          current.type === 'SKIN'
+          current.type === 'SKIN' && getSkinType(current.metadata) === appliedSkinType
             ? { ...current, isApplied: current.id === item.id }
             : current
         )
       );
-      setSuccessMessage(`Đã dùng frame ${item.name}.`);
+      setSuccessMessage(
+        appliedSkinType === 'DICE'
+          ? `Đã dùng xúc xắc ${item.name}.`
+          : appliedSkinType === 'MAP'
+            ? `Đã dùng bản đồ ${item.name}.`
+          : `Đã dùng frame ${item.name}.`
+      );
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Không thể dùng frame này.');
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể dùng trang phục này.');
     } finally {
       setProcessingItemId(null);
     }
@@ -189,19 +220,19 @@ export default function ShopPage() {
         <div className="panel-content space-y-4">
           <header className="shop-header-panel animate-fade-in-up">
             <p className="moba-heading text-xs uppercase tracking-[0.24em] text-cyan-300/90">
-              Zodiac Shop
+              CỬA HÀNG 12 CON GIÁP
             </p>
             <h1 className="moba-heading mt-1 text-2xl uppercase tracking-[0.12em] text-amber-100">
               {tabTitle}
             </h1>
             <p className="mt-2 text-sm text-slate-300/85">
-              Mua trang phục và vật phẩm bằng Coins hoặc Gems. Frame đã mua có thể Apply để đổi khung avatar.
+              Mua trang phục và vật phẩm bằng Vàng hoặc Ngọc. Trang phục đã mua có thể dùng để đổi khung avatar, panel xúc xắc hoặc bộ block bàn cờ trong trận.
             </p>
             <div className="shop-balance-chip mt-4">
-              <span className="shop-currency-coin">Coins</span>
+              <span className="shop-currency-coin">Vàng</span>
               <span>{user?.coins.toLocaleString() ?? 0}</span>
               <span className="text-slate-500">|</span>
-              <span className="shop-currency-gem">Gems</span>
+              <span className="shop-currency-gem">Ngọc</span>
               <span>{user?.gems.toLocaleString() ?? 0}</span>
             </div>
           </header>
@@ -231,7 +262,7 @@ export default function ShopPage() {
             </div>
           ) : visibleItems.length === 0 ? (
             <div className="empty-state">
-              <p className="text-sm text-slate-300/90">Chưa có item active trong tab này.</p>
+              <p className="text-sm text-slate-300/90">Chưa có vật phẩm đang bán trong tab này.</p>
             </div>
           ) : (
             <div className="shop-grid">
@@ -242,6 +273,8 @@ export default function ShopPage() {
                 const isProcessing = processingItemId === item.id;
                 const isOwned = item.ownedQuantity > 0;
                 const canApply = item.type === 'SKIN' && isOwned && !item.isApplied;
+                const coinPackRewardCoins = getCoinPackRewardCoins(item.metadata);
+                const isCoinPackItem = item.type === 'ITEM' && isCoinPack(item.metadata);
 
                 return (
                   <article
@@ -275,12 +308,21 @@ export default function ShopPage() {
                             </span>
                           </div>
                           <p className="mt-2 min-h-[2.8rem] text-xs leading-relaxed text-slate-300/88">
-                            {item.description ?? 'Một vật phẩm bí ẩn trong cửa hàng 12 con giáp.'}
+                            {item.description
+                              ?? (isCoinPackItem
+                                ? 'Đổi Ngọc để nhận Vàng ngay.'
+                                : 'Một vật phẩm bí ẩn trong cửa hàng 12 con giáp.')}
                           </p>
                           <div className="shop-price-row mt-3">
-                            <span className="shop-price-coin">{item.priceCoins} Coins</span>
-                            <span className="shop-price-gem">{item.priceGems} Gems</span>
-                            <span className="shop-owned-tag">Owned x{item.ownedQuantity}</span>
+                            <span className="shop-price-coin">{item.priceCoins} Vàng</span>
+                            <span className="shop-price-gem">{item.priceGems} Ngọc</span>
+                            {isCoinPackItem ? (
+                              <span className="shop-owned-tag">
+                                Nhận +{coinPackRewardCoins.toLocaleString()} Vàng
+                              </span>
+                            ) : (
+                              <span className="shop-owned-tag">Đã sở hữu x{item.ownedQuantity}</span>
+                            )}
                           </div>
 
                           {item.type === 'SKIN' && item.isApplied ? (
@@ -294,7 +336,7 @@ export default function ShopPage() {
                               onClick={() => handleApply(item)}
                               type="button"
                             >
-                              {isProcessing ? 'Đang apply...' : 'Apply'}
+                              {isProcessing ? 'Đang dùng...' : 'Dùng'}
                             </button>
                           ) : (
                             <button

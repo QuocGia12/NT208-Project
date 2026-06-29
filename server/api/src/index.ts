@@ -26,7 +26,7 @@ app.use(
     origin: allowedOrigins
   })
 );
-app.use(express.json({ limit: '8mb' }));
+app.use(express.json({ limit: '32mb' }));
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);

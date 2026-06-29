@@ -142,7 +142,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 
   const handleSaveAvatar = async () => {
     if (!token) {
-      setAvatarError('You are not authenticated. Please login again.');
+      setAvatarError('Bạn chưa đăng nhập. Hãy đăng nhập lại.');
       return;
     }
 
@@ -155,9 +155,9 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       const updated = await updateMyAvatar(token, nextAvatar);
       updateUser(updated);
       setAvatarInput(updated.avatar ?? '');
-      setAvatarMessage('Avatar updated successfully.');
+      setAvatarMessage('Đã cập nhật avatar.');
     } catch (error) {
-      setAvatarError(error instanceof Error ? error.message : 'Unable to update avatar.');
+      setAvatarError(error instanceof Error ? error.message : 'Không thể cập nhật avatar.');
     } finally {
       setIsSavingAvatar(false);
     }
@@ -169,7 +169,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     const normalizedConfirmPassword = confirmPassword.trim();
 
     if (!token) {
-      setPasswordError('You are not authenticated. Please login again.');
+      setPasswordError('Bạn chưa đăng nhập. Hãy đăng nhập lại.');
       return;
     }
 
@@ -178,17 +178,17 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       normalizedNewPassword.length === 0 ||
       normalizedConfirmPassword.length === 0
     ) {
-      setPasswordError('Please fill in all password fields.');
+      setPasswordError('Hãy nhập đầy đủ các ô mật khẩu.');
       return;
     }
 
     if (normalizedNewPassword.length < 6) {
-      setPasswordError('New password must be at least 6 characters.');
+      setPasswordError('Mật khẩu mới phải có ít nhất 6 ký tự.');
       return;
     }
 
     if (normalizedNewPassword !== normalizedConfirmPassword) {
-      setPasswordError('New password and confirm password do not match.');
+      setPasswordError('Mật khẩu mới và xác nhận mật khẩu chưa khớp.');
       return;
     }
 
@@ -208,7 +208,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       setConfirmPassword('');
       setPasswordMessage(message);
     } catch (error) {
-      setPasswordError(error instanceof Error ? error.message : 'Unable to change password.');
+      setPasswordError(error instanceof Error ? error.message : 'Không thể đổi mật khẩu.');
     } finally {
       setIsChangingPassword(false);
     }
@@ -222,7 +222,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         className="panel-container panel-container-settings settings-panel-responsive"
         ref={panelRef}
         role="dialog"
-        aria-label="Settings"
+        aria-label="Cài đặt"
         aria-modal="true"
       >
         <img
@@ -231,27 +231,27 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
           alt=""
         />
 
-        <div className="panel-tabs settings-panel-tabs" role="tablist" aria-label="Settings tabs">
+        <div className="panel-tabs settings-panel-tabs" role="tablist" aria-label="Các tab cài đặt">
           <button
             onClick={() => setActiveTab('audio')}
             type="button"
             className={`panel-tab settings-panel-tab ${activeTab === 'audio' ? 'panel-tab-active' : ''}`}
-            aria-label="Audio settings"
+            aria-label="Cài đặt âm thanh"
             aria-selected={activeTab === 'audio'}
             role="tab"
           >
-            <span className="tab-label tab-label-sm">AUDIO</span>
+            <span className="tab-label tab-label-sm">ÂM THANH</span>
             <span className="panel-tab-arrow tab-arrow-sm">&gt;</span>
           </button>
           <button
             onClick={() => setActiveTab('account')}
             type="button"
             className={`panel-tab settings-panel-tab ${activeTab === 'account' ? 'panel-tab-active' : ''}`}
-            aria-label="Account settings"
+            aria-label="Cài đặt tài khoản"
             aria-selected={activeTab === 'account'}
             role="tab"
           >
-            <span className="tab-label tab-label-sm">ACCOUNT</span>
+            <span className="tab-label tab-label-sm">TÀI KHOẢN</span>
             <span className="panel-tab-arrow tab-arrow-sm">&gt;</span>
           </button>
         </div>
@@ -260,25 +260,25 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
           {activeTab === 'audio' && (
             <div className="space-y-6 animate-fade-in" role="tabpanel">
               <h2 className="moba-heading mb-4 text-sm uppercase tracking-[0.2em] text-amber-100">
-                Audio Settings
+                Cài đặt âm thanh
               </h2>
               <VolumeSlider
-                label="Master Volume"
+                label="Âm lượng tổng"
                 onChange={(v) => updateSetting('masterVolume', v)}
                 value={settings.masterVolume}
               />
               <VolumeSlider
-                label="Music Volume"
+                label="Âm lượng nhạc"
                 onChange={(v) => updateSetting('musicVolume', v)}
                 value={settings.musicVolume}
               />
               <VolumeSlider
-                label="SFX Volume"
+                label="Âm lượng hiệu ứng"
                 onChange={(v) => updateSetting('sfxVolume', v)}
                 value={settings.sfxVolume}
               />
               <p className="text-[0.65rem] text-slate-500">
-                Volume settings are applied in real-time and saved automatically.
+                Âm lượng được áp dụng ngay và tự động lưu.
               </p>
             </div>
           )}
@@ -286,20 +286,20 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
           {activeTab === 'account' && (
             <div className="space-y-5 animate-fade-in" role="tabpanel">
               <h2 className="moba-heading mb-4 text-sm uppercase tracking-[0.2em] text-amber-100">
-                Account Settings
+                Cài đặt tài khoản
               </h2>
               <div className="space-y-3">
                 <div>
                   <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Username
+                    Tên đăng nhập
                   </span>
                   <p className="mt-0.5 text-sm font-bold uppercase tracking-[0.1em] text-amber-100">
-                    {user?.username ?? 'Unknown'}
+                    {user?.username ?? 'Không rõ'}
                   </p>
                 </div>
                 <div>
                   <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    User ID
+                    ID người dùng
                   </span>
                   <p className="mt-0.5 truncate text-xs text-cyan-200/80">
                     {user?.id ?? '-'}
@@ -335,7 +335,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     onClick={handleSaveAvatar}
                     type="button"
                   >
-                    {isSavingAvatar ? 'Saving...' : 'Save Avatar'}
+                    {isSavingAvatar ? 'Đang lưu...' : 'Lưu avatar'}
                   </button>
                   <button
                     className="moba-secondary-button min-w-[6rem]"
@@ -343,7 +343,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                     onClick={() => setAvatarInput('')}
                     type="button"
                   >
-                    Clear
+                    Xóa
                   </button>
                 </div>
               </div>
@@ -352,27 +352,27 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 
               <div className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">
-                  Change Password
+                  Đổi mật khẩu
                 </p>
 
                 <input
                   className="moba-input w-full"
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Current password"
+                  placeholder="Mật khẩu hiện tại"
                   type="password"
                   value={currentPassword}
                 />
                 <input
                   className="moba-input w-full"
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="New password"
+                  placeholder="Mật khẩu mới"
                   type="password"
                   value={newPassword}
                 />
                 <input
                   className="moba-input w-full"
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
+                  placeholder="Nhập lại mật khẩu mới"
                   type="password"
                   value={confirmPassword}
                 />
@@ -390,7 +390,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   onClick={handleChangePassword}
                   type="button"
                 >
-                  {isChangingPassword ? 'Updating...' : 'Update Password'}
+                  {isChangingPassword ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
                 </button>
               </div>
 
@@ -400,7 +400,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                 <>
                   <div className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">
-                      Admin
+                      Quản trị
                     </p>
                     <button
                       className="moba-secondary-button w-full"
@@ -410,7 +410,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                       }}
                       type="button"
                     >
-                      Open Admin Shop
+                      Mở quản lý cửa hàng
                     </button>
                   </div>
 
@@ -420,8 +420,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 
               <div className="space-y-2">
                 <p className="text-xs text-slate-400">
-                  Logging out will clear your session. You will need to sign in again to
-                  access the arena.
+                  Đăng xuất sẽ xóa phiên hiện tại. Bạn cần đăng nhập lại để vào đấu trường.
                 </p>
                 <button
                   className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-400/40 bg-gradient-to-r from-rose-950/60 to-rose-900/40 px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-rose-200 transition hover:border-rose-400/70 hover:shadow-[0_0_18px_rgba(225,29,72,0.15)]"
@@ -430,7 +429,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   type="button"
                 >
                   <LogoutIcon />
-                  Logout
+                  Đăng xuất
                 </button>
               </div>
             </div>
@@ -442,7 +441,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         className="settings-modal-close-button"
         onClick={onClose}
         type="button"
-        aria-label="Close settings"
+        aria-label="Đóng cài đặt"
       >
         <CloseIcon />
       </button>
@@ -451,7 +450,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         className="settings-modal-back-button"
         onClick={onClose}
         type="button"
-        aria-label="Back"
+        aria-label="Quay lại"
       >
         <img src="/images/ui-game/btn-back.png" className="w-full" alt="Trở về" />
       </button>
