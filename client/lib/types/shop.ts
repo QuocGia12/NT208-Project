@@ -1,7 +1,8 @@
 import type { AuthUser } from '@/lib/types/auth';
 
 export type ShopItemType = 'SKIN' | 'ITEM';
-export type SkinType = 'FRAME';
+export type SkinType = 'FRAME' | 'DICE' | 'MAP';
+export type ShopItemKind = 'STANDARD' | 'COIN_PACK';
 
 export type ShopItem = {
   id: string;
@@ -57,6 +58,8 @@ export type BuyShopItemResponse = {
     priceCoins: number;
     priceGems: number;
     ownedQuantity: number;
+    itemKind?: ShopItemKind;
+    rewardCoins?: number;
   };
 };
 
@@ -74,6 +77,7 @@ export type AdminShopItemsResponse = {
 export type UpsertAdminShopItemPayload = {
   type: ShopItemType;
   skinType?: SkinType;
+  itemKind?: ShopItemKind;
   code: string;
   name: string;
   description?: string | null;
@@ -96,4 +100,9 @@ export type ApplyShopItemResponse = {
 
 export type AdminShopUploadResponse = {
   imageUrl: string;
+};
+
+export type AdminShopMapUploadResponse = {
+  imageUrl: string;
+  metadata: unknown;
 };

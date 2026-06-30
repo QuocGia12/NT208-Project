@@ -1,11 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { SocketClient } from '../lib/SocketClient';
+import type { EquippedMapAssets } from '../lib/types/auth';
 import type { PreviewPrivateState } from '../phaser/mock/gamePreviewData';
 import type { PublicGameState } from '../types/game';
 
 interface Props {
   roomId: string;
   playerId: string;
+  dicePanelImageUrl?: string | null;
+  mapSkinAssets?: EquippedMapAssets | null;
   previewState?: PublicGameState;
   previewPrivateState?: PreviewPrivateState;
 }
@@ -14,7 +17,14 @@ type PhaserGameInstance = import('phaser').Game;
 
 const socketClient = SocketClient.getInstance();
 
-const PhaserGame: React.FC<Props> = ({ roomId, playerId, previewState, previewPrivateState }) => {
+const PhaserGame: React.FC<Props> = ({
+  roomId,
+  playerId,
+  dicePanelImageUrl,
+  mapSkinAssets,
+  previewState,
+  previewPrivateState
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -80,6 +90,8 @@ const PhaserGame: React.FC<Props> = ({ roomId, playerId, previewState, previewPr
       game.scene.add('UIScene', UIScene, false);
       game.registry.set('roomId', roomId);
       game.registry.set('playerId', playerId);
+      game.registry.set('dicePanelImageUrl', dicePanelImageUrl ?? null);
+      game.registry.set('mapSkinAssets', mapSkinAssets ?? null);
       game.registry.set('previewState', previewState ?? null);
       game.registry.set('previewPrivateState', previewPrivateState ?? null);
       game.scene.start('PreloadScene');
@@ -93,7 +105,7 @@ const PhaserGame: React.FC<Props> = ({ roomId, playerId, previewState, previewPr
         game.destroy(true);
       }
     };
-  }, [playerId, previewPrivateState, previewState, roomId]);
+  }, [dicePanelImageUrl, mapSkinAssets, playerId, previewPrivateState, previewState, roomId]);
 
   return (
     <div

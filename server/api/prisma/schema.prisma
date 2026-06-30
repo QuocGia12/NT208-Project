@@ -39,7 +39,11 @@ model User {
   elo          Int             @default(1000)
   coins        Int             @default(0)
   gems         Int             @default(0)
+  loginStreakDay Int           @default(0)
+  lastLoginStreakDate String?
   equippedFrameItemId String?
+  equippedDiceItemId  String?
+  equippedMapItemId   String?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
@@ -47,12 +51,16 @@ model User {
   friendshipsReceived  Friendship[]   @relation("FriendshipReceiver")
   inventoryItems       UserInventory[]
   equippedFrameItem    ShopItem?      @relation("EquippedFrame", fields: [equippedFrameItemId], references: [id], onDelete: SetNull)
+  equippedDiceItem     ShopItem?      @relation("EquippedDice", fields: [equippedDiceItemId], references: [id], onDelete: SetNull)
+  equippedMapItem      ShopItem?      @relation("EquippedMap", fields: [equippedMapItemId], references: [id], onDelete: SetNull)
   wonMatches           MatchHistory[] @relation("MatchWinner")
   matchParticipations  MatchParticipant[]
   sentMessages         ChatMessage[]  @relation("ChatMessageSender")
   receivedMessages     ChatMessage[]  @relation("ChatMessageReceiver")
 
   @@index([equippedFrameItemId])
+  @@index([equippedDiceItemId])
+  @@index([equippedMapItemId])
 }
 
 model Friendship {
@@ -101,6 +109,8 @@ model ShopItem {
 
   inventories UserInventory[]
   equippedByUsers User[] @relation("EquippedFrame")
+  equippedDiceByUsers User[] @relation("EquippedDice")
+  equippedMapByUsers User[] @relation("EquippedMap")
 
   @@index([type, isActive])
 }

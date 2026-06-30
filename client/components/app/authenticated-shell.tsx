@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LobbyAnnouncementBar, LobbyTicker } from '@/components/app/lobby-ticker';
 import { SettingsModal } from '@/components/app/settings-modal';
 import { FixedAspectScene } from '@/components/layout/fixed-aspect-scene';
+import type { LoginStreakStatus } from '@/lib/types/auth';
 import {
   SETTINGS_STORAGE_KEY,
   SETTINGS_UPDATED_EVENT,
@@ -35,7 +36,8 @@ const UI_GAME_ASSETS = {
   btnFriends: '/images/ui-game/btn-friends.png',
   btnInbox: '/images/ui-game/btn-inbox.png',
   btnBxh: '/images/ui-game/btn-bxh.png',
-  btnStories: '/images/ui-game/btn-stories.png'
+  btnStories: '/images/ui-game/btn-stories.png',
+  btnLoginStreak: '/game-ui/login-streak/button-login-streak.png'
 } as const;
 
 type NavItem = {
@@ -47,12 +49,12 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     href: '/shop',
-    label: 'SHOP',
+    label: 'Cửa hàng',
     icon: UI_GAME_ASSETS.btnShop
   },
   {
     href: '/friends',
-    label: 'FRIENDS',
+    label: 'Bạn bè',
     icon: UI_GAME_ASSETS.btnFriends
   },
   {
@@ -62,7 +64,7 @@ const navItems: NavItem[] = [
   },
   {
     href: '/chat',
-    label: 'INBOX',
+    label: 'Hộp thư',
     icon: UI_GAME_ASSETS.btnInbox
   },
   {
@@ -74,7 +76,7 @@ const navItems: NavItem[] = [
 
 const adminNavItem: NavItem = {
   href: '/admin/shop',
-  label: 'ADMIN',
+  label: 'Quản trị',
   icon: UI_GAME_ASSETS.btnShop
 };
 
@@ -85,15 +87,39 @@ const toSceneStyle = (left: number, top: number, width: number, height: number) 
   width: `${(width / 1920) * 100}%`
 });
 
+const VIETNAM_OFFSET_MS = 7 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const getVietnamTodayKey = () => {
+  const todayDayNumber = Math.floor((Date.now() + VIETNAM_OFFSET_MS) / DAY_MS);
+  const shiftedDate = new Date(todayDayNumber * DAY_MS);
+  const year = shiftedDate.getUTCFullYear();
+  const month = String(shiftedDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(shiftedDate.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const shouldHighlightLoginStreak = (loginStreak: LoginStreakStatus | null) => {
+  if (!loginStreak) {
+    return false;
+  }
+
+  const hasClaimedToday = loginStreak.lastClaimDate === getVietnamTodayKey();
+  return loginStreak.justClaimedToday || !hasClaimedToday;
+};
+
 export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const isLobbyRoute = pathname === '/lobby' || pathname === '/';
   const isGameRoute = pathname.startsWith('/game/');
   const isMatchmakingRoute = pathname.startsWith('/matchmaking');
+  const isLoginStreakRoute = pathname.startsWith('/login-streak');
+  const isLobbyStreakRoute = pathname.startsWith('/lobby-streak');
   const isStoriesRoute = pathname.startsWith('/stories');
 
   const token = useAuthStore((state) => state.token);
+  const loginStreak = useAuthStore((state) => state.loginStreak);
   const user = useAuthStore((state) => state.user);
 
   const [hasHydrated, setHasHydrated] = useState(false);
@@ -190,6 +216,10 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
     ? `${profile.username.slice(0, 10)}...`
     : profile.username;
   const avatarFrameSrc = user?.equippedFrameImageUrl ?? UI_GAME_ASSETS.avatarFrame;
+  const isLoginStreakButtonHighlighted = useMemo(
+    () => shouldHighlightLoginStreak(loginStreak),
+    [loginStreak]
+  );
 
   const handleSettingsClick = useCallback(() => {
     setIsSettingsOpen(true);
@@ -215,7 +245,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
     );
   }
 
-  if (isGameRoute || isMatchmakingRoute || isStoriesRoute) {
+  if (isGameRoute || isMatchmakingRoute || isLoginStreakRoute || isLobbyStreakRoute || isStoriesRoute) {
     return <>{children}</>;
   }
 
@@ -241,6 +271,20 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
                 alt="B?t d?u choi"
                 className="h-full w-full object-contain"
                 src={UI_GAME_ASSETS.btnStart}
+              />
+            </button>
+
+            <button
+              aria-label="Điểm danh hằng ngày"
+              className={`absolute z-20 pointer-events-auto transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98] ${isLoginStreakButtonHighlighted ? 'login-streak-lobby-button-highlight' : ''}`}
+              onClick={() => router.push('/lobby-streak')}
+              style={toSceneStyle(1662, 188, 196, 136)}
+              type="button"
+            >
+              <img
+                alt="Điểm danh hằng ngày"
+                className="login-streak-lobby-button h-full w-full object-contain"
+                src={UI_GAME_ASSETS.btnLoginStreak}
               />
             </button>
 
@@ -304,7 +348,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
             </div>
 
             <div className="absolute z-20" style={toSceneStyle(1050, 60, 313, 106)}>
-              <img alt="Coins" className="h-full w-full object-contain" src={UI_GAME_ASSETS.coin} />
+              <img alt="Vàng" className="h-full w-full object-contain" src={UI_GAME_ASSETS.coin} />
               <span
                 className="moba-heading absolute right-[17%] top-[28%] uppercase tracking-[0.08em] text-[#fff8dc] [text-shadow:0_3px_0_rgba(93,52,11,0.9)]"
                 style={{ fontSize: 'clamp(0.65rem, 1.45vw, 1.875rem)' }}
@@ -314,7 +358,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
             </div>
 
             <div className="absolute z-20" style={toSceneStyle(1400, 60, 313, 106)}>
-              <img alt="Diamonds" className="h-full w-full object-contain" src={UI_GAME_ASSETS.diamond} />
+              <img alt="Ngọc" className="h-full w-full object-contain" src={UI_GAME_ASSETS.diamond} />
               <span
                 className="moba-heading absolute right-[17%] top-[28%] uppercase tracking-[0.08em] text-[#fff8dc] [text-shadow:0_3px_0_rgba(93,52,11,0.9)]"
                 style={{ fontSize: 'clamp(0.65rem, 1.45vw, 1.875rem)' }}
@@ -324,17 +368,17 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
             </div>
 
             <button
-              aria-label="Settings"
+              aria-label="Cài đặt"
               className="absolute z-20 pointer-events-auto transition-transform hover:scale-[1.04] active:scale-[0.98]"
               onClick={handleSettingsClick}
               style={toSceneStyle(1728, 40, 150, 150)}
               type="button"
             >
-              <img alt="Settings icon" className="h-full w-full object-contain" src={UI_GAME_ASSETS.settings} />
+              <img alt="Biểu tượng cài đặt" className="h-full w-full object-contain" src={UI_GAME_ASSETS.settings} />
             </button>
 
             <nav
-              aria-label="Main navigation"
+              aria-label="Điều hướng chính"
               className="absolute bottom-[1.7%] left-[2.4%] z-20 flex gap-[0.55%] pointer-events-none"
             >
               {visibleNavItems.map((item) => {
@@ -436,7 +480,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
           </div>
 
           <div className="absolute z-20" style={toSceneStyle(1050, 60, 313, 106)}>
-            <img alt="Coins" className="h-full w-full object-contain" src={UI_GAME_ASSETS.coin} />
+            <img alt="Vàng" className="h-full w-full object-contain" src={UI_GAME_ASSETS.coin} />
             <span
               className="moba-heading absolute right-[17%] top-[28%] uppercase tracking-[0.08em] text-[#fff8dc] [text-shadow:0_3px_0_rgba(93,52,11,0.9)]"
               style={{ fontSize: 'clamp(0.65rem, 1.45vw, 1.875rem)' }}
@@ -446,7 +490,7 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
           </div>
 
           <div className="absolute z-20" style={toSceneStyle(1400, 60, 313, 106)}>
-            <img alt="Diamonds" className="h-full w-full object-contain" src={UI_GAME_ASSETS.diamond} />
+            <img alt="Ngọc" className="h-full w-full object-contain" src={UI_GAME_ASSETS.diamond} />
             <span
               className="moba-heading absolute right-[17%] top-[28%] uppercase tracking-[0.08em] text-[#fff8dc] [text-shadow:0_3px_0_rgba(93,52,11,0.9)]"
               style={{ fontSize: 'clamp(0.65rem, 1.45vw, 1.875rem)' }}
@@ -456,17 +500,17 @@ export const AuthenticatedShell = ({ children }: AuthenticatedShellProps) => {
           </div>
 
           <button
-            aria-label="Settings"
+            aria-label="Cài đặt"
             className="absolute z-20 pointer-events-auto transition-transform hover:scale-[1.04] active:scale-[0.98]"
             onClick={handleSettingsClick}
             style={toSceneStyle(1728, 40, 150, 150)}
             type="button"
           >
-            <img alt="Settings icon" className="h-full w-full object-contain" src={UI_GAME_ASSETS.settings} />
+            <img alt="Biểu tượng cài đặt" className="h-full w-full object-contain" src={UI_GAME_ASSETS.settings} />
           </button>
 
           <nav
-            aria-label="Main navigation"
+            aria-label="Điều hướng chính"
             className="absolute bottom-[1.7%] left-[2.4%] z-20 flex gap-[0.55%] pointer-events-none"
           >
             {visibleNavItems.map((item) => {

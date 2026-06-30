@@ -7,7 +7,9 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
-    preloadGameUIAssets(this);
+    const dicePanelImageUrl = this.registry.get('dicePanelImageUrl') as string | null | undefined;
+    const mapSkinAssets = this.registry.get('mapSkinAssets');
+    preloadGameUIAssets(this, { dicePanelImageUrl, mapSkinAssets });
   }
 
   create(): void {

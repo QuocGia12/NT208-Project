@@ -21,13 +21,20 @@ const httpServer = createServer(app);
 const port = Number(process.env.PORT ?? 4000);
 const allowedOrigins = getAllowedOrigins();
 
+// Khi chạy sau Nginx reverse proxy, cần trust proxy để:
+// - req.protocol trả về 'https' (từ X-Forwarded-Proto)
+// - req.ip trả về IP thực của client (từ X-Forwarded-For)
+app.set('trust proxy', 1);
+
 app.use(
   cors({
     origin: allowedOrigins
   })
 );
-app.use(express.json({ limit: '8mb' }));
-app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+app.use(express.json({ limit: '32mb' }));
+// Static uploads: cho phép mọi origin truy cập (ảnh shop, bản đồ là public assets)
+// Phaser dùng XHR để load ảnh nên cần CORS header explict, không thể dùng CORS chung với API
+app.use('/uploads', cors({ origin: '*' }), express.static(path.resolve(process.cwd(), 'uploads')));
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/friends', friendRouter);

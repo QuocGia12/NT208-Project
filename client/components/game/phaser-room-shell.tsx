@@ -30,6 +30,11 @@ const unwrapPayload = <T,>(payload: WrappedPayload<T>): T => {
   return payload;
 };
 
+// Normalize http:// → https:// cho URL cũ được lưu trong localStorage
+// (data được upload trước khi Nginx có X-Forwarded-Proto → URL bị lưu dưới dạng http://)
+const toHttps = (url: string | null | undefined): string | null =>
+  url ? url.replace(/^http:\/\//, 'https://') : null;
+
 export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -37,7 +42,7 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
   const [isGuideBookOpen, setIsGuideBookOpen] = useState(false);
   const [socketReady, setSocketReady] = useState(gameSocketClient.isConnected());
   const [status, setStatus] = useState(
-    gameSocketClient.isConnected() ? 'Connected to game server.' : 'Connecting to game server...'
+    gameSocketClient.isConnected() ? 'Đã kết nối máy chủ game.' : 'Đang kết nối máy chủ game...'
   );
   const [routeMatch, setRouteMatch] = useState<GameMatchFound | null>(() =>
     gameSocketClient.getMatchForRoom(roomId.trim())
@@ -47,6 +52,25 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
   const activeMatch = routeMatch ?? gameSocketClient.getMatchForRoom(normalizedRoomId);
   const matchedPlayerId = gameSocketClient.myPlayerId || activeMatch?.yourPlayerId || user?.id || '';
   const hasActiveMatchForRoute = activeMatch?.roomId === normalizedRoomId;
+
+  // Normalize http:// → https:// trước khi truyền vào Phaser
+  // Cần thiết vì data cũ trong localStorage vẫn giữ URL http:// từ trước khi fix Nginx
+  const safeDicePanelImageUrl = useMemo(
+    () => toHttps(user?.equippedDicePanelImageUrl),
+    [user?.equippedDicePanelImageUrl]
+  );
+
+  const safeMapSkinAssets = useMemo(() => {
+    const assets = user?.equippedMapAssets;
+    if (!assets) return null;
+    return {
+      previewImageUrl: toHttps(assets.previewImageUrl) ?? assets.previewImageUrl,
+      addCardImageUrl: toHttps(assets.addCardImageUrl) ?? assets.addCardImageUrl,
+      zodiacBoxImageUrls: Object.fromEntries(
+        Object.entries(assets.zodiacBoxImageUrls).map(([k, v]) => [k, toHttps(v) ?? v])
+      ) as typeof assets.zodiacBoxImageUrls,
+    };
+  }, [user?.equippedMapAssets]);
 
   useEffect(() => {
     const hydratedMatch = gameSocketClient.getMatchForRoom(normalizedRoomId);
@@ -60,17 +84,17 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
 
     const handleConnect = () => {
       setSocketReady(true);
-      setStatus('Connected to game server.');
+      setStatus('Đã kết nối máy chủ game.');
     };
 
     const handleDisconnect = () => {
       setSocketReady(false);
-      setStatus('Disconnected. Reconnecting...');
+      setStatus('Mất kết nối. Đang kết nối lại...');
     };
 
     const handleGameError = (payload: WrappedPayload<GameSocketError>) => {
       const data = unwrapPayload(payload);
-      setStatus(data?.message ?? 'Game server returned an error.');
+      setStatus(data?.message ?? 'Máy chủ game trả về lỗi.');
     };
 
     const handleMatchFound = (payload: WrappedPayload<GameMatchFound>) => {
@@ -106,9 +130,9 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
     return (
       <div className="phaser-room-shell">
         <div className="game-route-loading">
-          <p className="game-route-loading-title moba-heading">Preparing match...</p>
+          <p className="game-route-loading-title moba-heading">Đang chuẩn bị trận...</p>
           <p className="game-route-loading-subtitle">
-            Missing room or player session. Please return to lobby and start a match again.
+            Thiếu phòng hoặc phiên người chơi. Hãy quay về lobby và bắt đầu trận lại.
           </p>
           <button className="game-route-back-btn" onClick={handleBackToLobby} type="button">
             Trở về lobby
@@ -125,10 +149,10 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
           Trở về lobby
         </button>
         <div className="game-route-meta">
-          <span>Room: {normalizedRoomId}</span>
+          <span>Phòng: {normalizedRoomId}</span>
           <span>{status}</span>
           {!hasActiveMatchForRoute ? (
-            <span className="game-route-warning">Waiting for active match session...</span>
+            <span className="game-route-warning">Đang chờ phiên trận đấu...</span>
           ) : null}
         </div>
       </div>
@@ -137,14 +161,19 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
         {socketReady ? (
           <div className="relative h-full w-full overflow-hidden bg-[#050816]">
             <div className="absolute inset-0">
-              <PhaserGame roomId={normalizedRoomId} playerId={matchedPlayerId} />
+              <PhaserGame
+                roomId={normalizedRoomId}
+                playerId={matchedPlayerId}
+                dicePanelImageUrl={safeDicePanelImageUrl}
+                mapSkinAssets={safeMapSkinAssets}
+              />
             </div>
             <button
               className="game-route-mobile-back-btn"
               onClick={handleBackToLobby}
               type="button"
             >
-              Lobby
+              Về lobby
             </button>
             <GuideBookButton
               alt="Mở hướng dẫn"
@@ -160,8 +189,8 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
           </div>
         ) : (
           <div className="game-route-loading">
-            <p className="game-route-loading-title moba-heading">Connecting...</p>
-            <p className="game-route-loading-subtitle">Opening realtime game session.</p>
+            <p className="game-route-loading-title moba-heading">Đang kết nối...</p>
+            <p className="game-route-loading-subtitle">Đang mở phiên game realtime.</p>
           </div>
         )}
       </div>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="86" height="82" viewBox="0 0 86 82" fill="none">
+  <title>Simple 2D Tết ox icon</title>
+  <defs>
+    <clipPath id="cardClip">
+      <rect width="86" height="82" rx="14"/>
+    </clipPath>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#6E1315" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <g clip-path="url(#cardClip)">
+    <rect width="86" height="82" rx="14" fill="#FAB42C"/>
+
+    <!-- simple soft base -->
+    <ellipse cx="43" cy="68" rx="26" ry="5" fill="#AD110C" opacity="0.18"/>
+
+    <!-- small simple Tết dots, same minimal style -->
+    <circle cx="15" cy="17" r="2" fill="#FCF2EF" opacity="0.75"/>
+    <circle cx="70" cy="18" r="1.7" fill="#FCF2EF" opacity="0.75"/>
+    <circle cx="73" cy="55" r="1.5" fill="#FCF2EF" opacity="0.7"/>
+    <circle cx="14" cy="55" r="1.4" fill="#FCF2EF" opacity="0.7"/>
+
+    <!-- simple 2D ox main image -->
+    <g filter="url(#softShadow)">
+      <!-- wide horns: the key silhouette for ox/buffalo -->
+      <path d="M28 28 C18 21 15 13 20 10 C25 16 31 18 36 21" fill="#FCF2EF" stroke="#AD110C" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M58 28 C68 21 71 13 66 10 C61 16 55 18 50 21" fill="#FCF2EF" stroke="#AD110C" stroke-width="2" stroke-linejoin="round"/>
+
+      <!-- ears under horns -->
+      <path d="M30 31 C22 26 17 30 19 37 C26 38 31 36 34 32" fill="#E87637" stroke="#AD110C" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M56 31 C64 26 69 30 67 37 C60 38 55 36 52 32" fill="#E87637" stroke="#AD110C" stroke-width="2" stroke-linejoin="round"/>
+
+      <!-- broad body, not long/thin -->
+      <ellipse cx="43" cy="56" rx="21" ry="15" fill="#E87637" stroke="#AD110C" stroke-width="2"/>
+
+      <!-- short legs -->
+      <path d="M29 64 L35 64 L35 72 L29 72 Z" fill="#E87637" stroke="#AD110C" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M51 64 L57 64 L57 72 L51 72 Z" fill="#E87637" stroke="#AD110C" stroke-width="1.8" stroke-linejoin="round"/>
+
+      <!-- split hooves -->
+      <path d="M27.5 71.5 L36.5 71.5 L34.5 75 L29.5 75 Z" fill="#6E1315"/>
+      <path d="M49.5 71.5 L58.5 71.5 L56.5 75 L51.5 75 Z" fill="#6E1315"/>
+      <path d="M32 72 L32 74.8" stroke="#FAB42C" stroke-width="1" stroke-linecap="round" opacity="0.9"/>
+      <path d="M54 72 L54 74.8" stroke="#FAB42C" stroke-width="1" stroke-linecap="round" opacity="0.9"/>
+
+      <!-- large head -->
+      <circle cx="43" cy="36" r="18.5" fill="#E87637" stroke="#AD110C" stroke-width="2"/>
+
+      <!-- forehead mark: simple Tết-like gold accent -->
+      <path d="M43 24 L47 30 L43 28 L39 30 Z" fill="#FAB42C" opacity="0.95"/>
+
+      <!-- big light muzzle for readability from far away -->
+      <ellipse cx="43" cy="44" rx="12.5" ry="8.5" fill="#FCF2EF" opacity="0.72"/>
+
+      <!-- face -->
+      <circle cx="36.5" cy="36" r="2" fill="#6E1315"/>
+      <circle cx="49.5" cy="36" r="2" fill="#6E1315"/>
+      <ellipse cx="38.5" cy="45" rx="2.1" ry="2.8" fill="#6E1315" opacity="0.9"/>
+      <ellipse cx="47.5" cy="45" rx="2.1" ry="2.8" fill="#6E1315" opacity="0.9"/>
+      <path d="M43 47 C41.5 50 38.5 50 37 48.5" stroke="#6E1315" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M43 47 C44.5 50 47.5 50 49 48.5" stroke="#6E1315" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+      <!-- tiny bell: festive but still simple -->
+      <path d="M36 55 C39 58 47 58 50 55" stroke="#6E1315" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.65"/>
+      <circle cx="43" cy="59" r="4" fill="#FAB42C" stroke="#AD110C" stroke-width="1.5"/>
+      <circle cx="43" cy="61" r="1" fill="#6E1315"/>
+
+      <!-- short tail with hair tuft -->
+      <path d="M62 56 C70 57 71 50 66 48" stroke="#6E1315" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M66 47 L70 45 L69 50 Z" fill="#6E1315"/>
+    </g>
+
+    <!-- simple flower accents -->
+    <g fill="#FCF2EF" opacity="0.9">
+      <circle cx="22" cy="23" r="1.5"/>
+      <circle cx="25" cy="23" r="1.5"/>
+      <circle cx="23.5" cy="20.7" r="1.5"/>
+      <circle cx="23.5" cy="25.3" r="1.5"/>
+      <circle cx="63" cy="63" r="1.3"/>
+      <circle cx="66" cy="63" r="1.3"/>
+      <circle cx="64.5" cy="60.9" r="1.3"/>
+      <circle cx="64.5" cy="65.1" r="1.3"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,3 @@
+ALTER TABLE "User"
+ADD COLUMN "loginStreakDay" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "lastLoginStreakDate" TEXT;

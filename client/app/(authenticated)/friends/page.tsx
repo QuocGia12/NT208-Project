@@ -27,10 +27,10 @@ const getMockOnlineStatus = (userId: string) => {
 };
 
 const getRelationshipLabel = (status: FriendRelationshipStatus) => {
-  if (status === 'PENDING_OUTGOING') return 'Request Sent';
-  if (status === 'PENDING_INCOMING') return 'Incoming Request';
-  if (status === 'FRIENDS') return 'Already Friends';
-  return 'Send Request';
+  if (status === 'PENDING_OUTGOING') return 'Đã gửi lời mời';
+  if (status === 'PENDING_INCOMING') return 'Có lời mời';
+  if (status === 'FRIENDS') return 'Đã là bạn bè';
+  return 'Gửi lời mời';
 };
 
 const UserAvatar = ({ user }: { user: FriendUser }) => (
@@ -86,7 +86,7 @@ export default function FriendsPage() {
       setPendingRequests(response.requests);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to load pending friend requests.'
+        error instanceof Error ? error.message : 'Không thể tải yêu cầu kết bạn.'
       );
     } finally {
       setIsPendingLoading(false);
@@ -100,7 +100,7 @@ export default function FriendsPage() {
       setFriends(response.friends);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to load friend list.'
+        error instanceof Error ? error.message : 'Không thể tải danh sách bạn bè.'
       );
     } finally {
       setIsFriendsLoading(false);
@@ -118,10 +118,10 @@ export default function FriendsPage() {
   const handleSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     clearNotices();
-    if (!token) { setErrorMessage('Please login first.'); return; }
+    if (!token) { setErrorMessage('Hãy đăng nhập trước.'); return; }
     const query = searchTerm.trim();
     if (query.length < 2) {
-      setErrorMessage('Enter at least 2 characters to search.');
+      setErrorMessage('Hãy nhập ít nhất 2 ký tự để tìm kiếm.');
       setSearchResults([]);
       return;
     }
@@ -129,9 +129,9 @@ export default function FriendsPage() {
     try {
       const response = await searchUsers(token, query);
       setSearchResults(response.results);
-      setSuccessMessage(`Found ${response.results.length} player(s).`);
+      setSuccessMessage(`Tìm thấy ${response.results.length} người chơi.`);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to search players.');
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể tìm người chơi.');
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -149,9 +149,9 @@ export default function FriendsPage() {
           item.id === targetUserId ? { ...item, relationshipStatus: 'PENDING_OUTGOING' } : item
         )
       );
-      setSuccessMessage('Friend request sent.');
+      setSuccessMessage('Đã gửi lời mời kết bạn.');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to send friend request.');
+      setErrorMessage(error instanceof Error ? error.message : 'Không thể gửi lời mời kết bạn.');
     } finally {
       setSendingUserId(null);
     }
@@ -168,7 +168,7 @@ export default function FriendsPage() {
       if (action === 'accept') await loadFriendList();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to update friend request.'
+        error instanceof Error ? error.message : 'Không thể cập nhật yêu cầu kết bạn.'
       );
     } finally {
       setRespondingRequestId(null);
@@ -189,7 +189,7 @@ export default function FriendsPage() {
           alt=""
         />
 
-        <div className="panel-tabs" role="tablist" aria-label="Friends tabs">
+        <div className="panel-tabs" role="tablist" aria-label="Các tab bạn bè">
           <button
             onClick={() => setActiveTab('friends')}
             type="button"
@@ -238,7 +238,7 @@ export default function FriendsPage() {
             <section className="friends-panel animate-fade-in-up">
               <header className="friends-header-panel mb-4">
                 <p className="moba-heading text-xs uppercase tracking-[0.26em] text-cyan-300/90">
-                  Social System
+                  HỆ THỐNG XÃ HỘI
                 </p>
                 <h1 className="moba-heading mt-1 text-2xl uppercase tracking-[0.12em] text-amber-100">
                   Bạn Bè
@@ -246,12 +246,12 @@ export default function FriendsPage() {
               </header>
               {isFriendsLoading ? (
                 <div className="empty-state">
-                  <p className="text-sm text-slate-300/90">Loading your squad...</p>
+                  <p className="text-sm text-slate-300/90">Đang tải danh sách bạn bè...</p>
                 </div>
               ) : friendsWithStatus.length === 0 ? (
                 <div className="empty-state">
                   <p className="text-sm text-slate-300/90">
-                    You have no friends yet. Search players and send invitations.
+                    Bạn chưa có bạn bè. Hãy tìm người chơi và gửi lời mời.
                   </p>
                 </div>
               ) : (
@@ -270,7 +270,7 @@ export default function FriendsPage() {
                                 friend.isOnline ? 'friends-status-online' : 'friends-status-offline'
                               }`}
                             />
-                            {friend.isOnline ? 'Online' : 'Offline'}
+                            {friend.isOnline ? 'Đang online' : 'Đang offline'}
                           </p>
                         </div>
                       </div>
@@ -286,7 +286,7 @@ export default function FriendsPage() {
             <section className="friends-panel animate-fade-in-up">
               <header className="friends-header-panel mb-4">
                 <p className="moba-heading text-xs uppercase tracking-[0.26em] text-cyan-300/90">
-                  Social System
+                  HỆ THỐNG XÃ HỘI
                 </p>
                 <h1 className="moba-heading mt-1 text-2xl uppercase tracking-[0.12em] text-amber-100">
                   Yêu Cầu Kết Bạn
@@ -294,11 +294,11 @@ export default function FriendsPage() {
               </header>
               {isPendingLoading ? (
                 <div className="empty-state">
-                  <p className="text-sm text-slate-300/90">Loading pending requests...</p>
+                  <p className="text-sm text-slate-300/90">Đang tải yêu cầu kết bạn...</p>
                 </div>
               ) : pendingRequests.length === 0 ? (
                 <div className="empty-state">
-                  <p className="text-sm text-slate-300/90">No incoming friend requests right now.</p>
+                  <p className="text-sm text-slate-300/90">Hiện chưa có yêu cầu kết bạn nào.</p>
                 </div>
               ) : (
                 <div className="friends-list">
@@ -313,7 +313,7 @@ export default function FriendsPage() {
                               {request.fromUser.username}
                             </p>
                             <p className="text-xs text-slate-400">
-                              Sent {new Date(request.createdAt).toLocaleDateString()}
+                              Gửi lúc {new Date(request.createdAt).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
@@ -324,7 +324,7 @@ export default function FriendsPage() {
                             onClick={() => handleRespondRequest(request.id, 'accept')}
                             type="button"
                           >
-                            {isBusy ? '...' : 'Accept'}
+                            {isBusy ? '...' : 'Đồng ý'}
                           </button>
                           <button
                             className="friends-action-button friends-action-button-danger"
@@ -332,7 +332,7 @@ export default function FriendsPage() {
                             onClick={() => handleRespondRequest(request.id, 'decline')}
                             type="button"
                           >
-                            {isBusy ? '...' : 'Decline'}
+                            {isBusy ? '...' : 'Từ chối'}
                           </button>
                         </div>
                       </article>
@@ -348,7 +348,7 @@ export default function FriendsPage() {
             <section className="friends-panel animate-fade-in-up">
               <header className="friends-header-panel mb-4">
                 <p className="moba-heading text-xs uppercase tracking-[0.26em] text-cyan-300/90">
-                  Social System
+                  HỆ THỐNG XÃ HỘI
                 </p>
                 <h1 className="moba-heading mt-1 text-2xl uppercase tracking-[0.12em] text-amber-100">
                   Tìm Kiếm
@@ -358,18 +358,18 @@ export default function FriendsPage() {
                 <input
                   className="moba-input"
                   onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Enter username..."
+                  placeholder="Nhập tên người chơi..."
                   value={searchTerm}
                 />
                 <button className="moba-button" disabled={isSearching} type="submit">
-                  {isSearching ? 'Searching...' : 'Search'}
+                  {isSearching ? 'Đang tìm...' : 'Tìm kiếm'}
                 </button>
               </form>
               <div className="friends-list mt-4">
                 {searchResults.length === 0 ? (
                   <div className="empty-state">
                     <p className="text-sm text-slate-300/90">
-                      Search for a player to send a friend request.
+                      Tìm người chơi để gửi lời mời kết bạn.
                     </p>
                   </div>
                 ) : (
@@ -385,7 +385,7 @@ export default function FriendsPage() {
                               {user.username}
                             </p>
                             <p className="text-xs text-slate-400">
-                              Rank {getRankLabel(user.elo)} | ELO {user.elo}
+                              Hạng {getRankLabel(user.elo)} | ELO {user.elo}
                             </p>
                           </div>
                         </div>
@@ -397,7 +397,7 @@ export default function FriendsPage() {
                           onClick={() => handleSendRequest(user.id)}
                           type="button"
                         >
-                          {isBusy ? 'Sending...' : getRelationshipLabel(user.relationshipStatus)}
+                          {isBusy ? 'Đang gửi...' : getRelationshipLabel(user.relationshipStatus)}
                         </button>
                       </article>
                     );

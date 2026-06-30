@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import jwt, { type SignOptions } from 'jsonwebtoken';
 
+import { buildLoginStreakStatus } from '../lib/login-streak';
 import { prisma } from '../lib/prisma';
 import { toSafeUser } from '../utils/safe-user';
 
@@ -99,6 +100,16 @@ authRouter.post('/login', async (req, res) => {
           select: {
             imageUrl: true
           }
+        },
+        equippedDiceItem: {
+          select: {
+            imageUrl: true
+          }
+        },
+        equippedMapItem: {
+          select: {
+            metadata: true
+          }
         }
       }
     });
@@ -126,6 +137,7 @@ authRouter.post('/login', async (req, res) => {
     );
 
     return res.status(200).json({
+      streak: buildLoginStreakStatus(user),
       token,
       user: toSafeUser(user)
     });

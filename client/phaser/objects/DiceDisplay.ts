@@ -190,7 +190,7 @@ export class DiceDisplay {
 
     this.panelCover.clear();
     this.panelCover.fillStyle(PANEL_BROWN, 1);
-    // this.panelCover.fillRect(-42, -31, 84, 84);
+    this.panelCover.fillRect(-42, -31, 84, 84);
 
     this.dieFace.clear();
     this.dieFace.fillStyle(DIE_FILL, 1);
