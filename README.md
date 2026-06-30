@@ -165,3 +165,4 @@ Các biến cho client (trong `client/.env.local`):
 - NEXT_PUBLIC_GAME_SERVER_URL: Biến dự phòng cũ cho cùng URL game server thời gian thực.
 
 > ***Ghi chú: Chúng em đã biết làm web và hiểu hệ thống web hoạt động như thế nào.***
+
