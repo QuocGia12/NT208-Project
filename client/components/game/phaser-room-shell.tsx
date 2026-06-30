@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -30,6 +30,11 @@ const unwrapPayload = <T,>(payload: WrappedPayload<T>): T => {
   return payload;
 };
 
+// Normalize http:// → https:// cho URL cũ được lưu trong localStorage
+// (data được upload trước khi Nginx có X-Forwarded-Proto → URL bị lưu dưới dạng http://)
+const toHttps = (url: string | null | undefined): string | null =>
+  url ? url.replace(/^http:\/\//, 'https://') : null;
+
 export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -47,6 +52,25 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
   const activeMatch = routeMatch ?? gameSocketClient.getMatchForRoom(normalizedRoomId);
   const matchedPlayerId = gameSocketClient.myPlayerId || activeMatch?.yourPlayerId || user?.id || '';
   const hasActiveMatchForRoute = activeMatch?.roomId === normalizedRoomId;
+
+  // Normalize http:// → https:// trước khi truyền vào Phaser
+  // Cần thiết vì data cũ trong localStorage vẫn giữ URL http:// từ trước khi fix Nginx
+  const safeDicePanelImageUrl = useMemo(
+    () => toHttps(user?.equippedDicePanelImageUrl),
+    [user?.equippedDicePanelImageUrl]
+  );
+
+  const safeMapSkinAssets = useMemo(() => {
+    const assets = user?.equippedMapAssets;
+    if (!assets) return null;
+    return {
+      previewImageUrl: toHttps(assets.previewImageUrl) ?? assets.previewImageUrl,
+      addCardImageUrl: toHttps(assets.addCardImageUrl) ?? assets.addCardImageUrl,
+      zodiacBoxImageUrls: Object.fromEntries(
+        Object.entries(assets.zodiacBoxImageUrls).map(([k, v]) => [k, toHttps(v) ?? v])
+      ) as typeof assets.zodiacBoxImageUrls,
+    };
+  }, [user?.equippedMapAssets]);
 
   useEffect(() => {
     const hydratedMatch = gameSocketClient.getMatchForRoom(normalizedRoomId);
@@ -140,8 +164,8 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
               <PhaserGame
                 roomId={normalizedRoomId}
                 playerId={matchedPlayerId}
-                dicePanelImageUrl={user?.equippedDicePanelImageUrl}
-                mapSkinAssets={user?.equippedMapAssets}
+                dicePanelImageUrl={safeDicePanelImageUrl}
+                mapSkinAssets={safeMapSkinAssets}
               />
             </div>
             <button
@@ -173,4 +197,3 @@ export const PhaserRoomShell = ({ roomId }: PhaserRoomShellProps) => {
     </div>
   );
 };
-
