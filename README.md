@@ -1,86 +1,133 @@
-# Formatted Project (client / server / shared)
+# Game Cuộc Đua 12 Con Giáp
+## Thông tin nhóm 
+|Họ và Tên|MSSV|Tỷ lệ đóng góp|
+|---------|----|--------------|
+|Nguyễn Văn Quốc Gia|24520415|50%|
+|Nguyễn Thị Mỹ Duyên|24520408|50%|
 
-## Structure
-- `client`: Next.js frontend
-- `server/game`: realtime game server (Socket.IO + game rules)
-- `server/api`: account/auth/social/shop API backend
-- `shared`: shared types/contracts
+## Cấu trúc dự án
+- `client`: Frontend Next.js
+- `server/game`: Server game thời gian thực (Socket.IO + logic trò chơi)
+- `server/api`: Backend API quản lý tài khoản, xác thực, xã hội, cửa hàng
+- `shared`: Các kiểu dữ liệu và hợp đồng dùng chung
 
-## Run
+## Khởi chạy
 1. `npm install`
 2. `npm run db:up`
 3. `npm run db:migrate`
 4. `npm run db:seed`
 5. `npm run dev`
 
-Default ports:
+Cổng mặc định:
 - client: `3000`
 - game server: `3001`
 - api server: `4000`
 - postgres: `25432`
 - redis: `26379`
 
-Useful commands:
-- `npm run db:up`: start Postgres and Redis
-- `npm run db:down`: stop Postgres and Redis
-- `npm run db:restart`: restart Postgres and Redis if a Docker port is stuck
-- `npm run db:migrate`: apply Prisma migrations
-- `npm run db:seed`: create/update the admin account from `server/api/.env`
-- `npm run db:studio`: open Prisma Studio
-- `npm run dev`: start DB, game server, API server, and frontend
+Các lệnh hữu ích:
+- `npm run db:up`: Khởi động Postgres và Redis
+- `npm run db:down`: Dừng Postgres và Redis
+- `npm run db:restart`: Khởi động lại Postgres và Redis nếu Docker bị kẹt cổng
+- `npm run db:migrate`: Áp dụng các migration của Prisma
+- `npm run db:seed`: Tạo hoặc cập nhật tài khoản admin từ `server/api/.env`
+- `npm run db:studio`: Mở Prisma Studio
+- `npm run dev`: Khởi động DB, game server, API server và frontend cùng lúc
 
-## Environment
-Copy or edit `server/api/.env` before running migrations/seeds.
+## Cấu hình môi trường
+Sao chép hoặc chỉnh sửa `server/api/.env` trước khi chạy migration hoặc seed.
 
-Required API values:
-- `DATABASE_URL`: PostgreSQL connection string
-- `JWT_SECRET`: JWT signing secret
-- `FRONTEND_ORIGINS`: comma-separated allowed frontend origins, for example `http://localhost:3000,https://qgiaaa.me,https://www.qgiaaa.me`
-- `GAME_SERVER_INTERNAL_SECRET`: shared secret used by the game server to award match rewards
-- `ADMIN_USERNAME`: admin seed username, default `admin`
-- `ADMIN_PASSWORD`: admin seed password, default `admin123`
-- `ADMIN_AVATAR`: optional admin avatar URL
+Các biến bắt buộc cho API:
+- `DATABASE_URL`: Chuỗi kết nối PostgreSQL
+- `JWT_SECRET`: Khóa bí mật dùng để ký JWT
+- `FRONTEND_ORIGINS`: Danh sách các origin frontend được phép (phân cách bởi dấu phẩy), ví dụ: `http://localhost:3000,https://qgiaaa.me,https://www.qgiaaa.me`
+- `GAME_SERVER_INTERNAL_SECRET`: Khóa bí mật dùng để game server trao thưởng trận đấu
+- `ADMIN_USERNAME`: Tên đăng nhập admin khi seed, mặc định là `admin`
+- `ADMIN_PASSWORD`: Mật khẩu admin khi seed, mặc định là `admin123`
+- `ADMIN_AVATAR`: URL avatar admin (tùy chọn)
 
-Game server values:
-- `API_BASE_URL`: API server URL used for match rewards, default local value is `http://localhost:4000`
-- `GAME_SERVER_INTERNAL_SECRET`: must match the API value above
+Các biến cho game server:
+- `API_BASE_URL`: URL của API server dùng để trao thưởng trận đấu, mặc định là `http://localhost:4000`
+- `GAME_SERVER_INTERNAL_SECRET`: Phải khớp với giá trị đã cấu hình bên API
 
-Client values are in `client/.env.local`:
-- `NEXT_PUBLIC_API_BASE_URL`: API server URL, default local value is `http://localhost:4000`
-- `NEXT_PUBLIC_GAME_SOCKET_URL`: realtime game server URL, default local value is `http://localhost:3001`
-- `NEXT_PUBLIC_GAME_SERVER_URL`: legacy fallback for the same realtime game server URL
+Các biến cho client (trong `client/.env.local`):
+- `NEXT_PUBLIC_API_BASE_URL`: URL của API server, mặc định là `http://localhost:4000`
+- `NEXT_PUBLIC_GAME_SOCKET_URL`: URL của game server thời gian thực, mặc định là `http://localhost:3001`
+- `NEXT_PUBLIC_GAME_SERVER_URL`: Biến dự phòng cũ cho cùng URL game server thời gian thực
 
-## Admin Shop
-Run `npm run db:seed` after migrations to create the admin user. Normal users cannot self-register as admin.
+## Các tính năng mới
 
-Admin features:
-- Admin login returns `role=ADMIN`.
-- Admin-only page: `/admin/shop`
-- Admin APIs: `GET/POST/PATCH/DELETE /api/admin/shop/items`
-- Toggle active status: `PATCH /api/admin/shop/items/:id/toggle-active`
+### 1. Login Streak — Điểm danh nhận thưởng hàng ngày
 
-Shop item types:
-- `SKIN`: shown in the `TRANG PHỤC` tab
-- `ITEM`: shown in the `VẬT PHẨM` tab
-- `CARD`: kept for future card shop compatibility
+Người chơi có thể đăng nhập mỗi ngày để nhận thưởng theo chuỗi liên tiếp (streak). Hệ thống hoạt động theo chu kỳ **12 ngày**, sau đó tự động lặp lại từ đầu.
 
-Public shop APIs:
-- `GET /api/shop/items`: active shop items only
-- `POST /api/shop/buy`: buy with `{ "itemId": "..." }`
-- `GET /api/shop/cards`: compatibility endpoint for old card shop data
-- `POST /api/shop/buy` also accepts `{ "cardId": "..." }` for compatibility
+**Cơ chế hoạt động:**
+- Mỗi ngày người chơi chỉ được nhận thưởng **một lần duy nhất** (tính theo múi giờ Việt Nam, UTC+7).
+- Nếu người chơi đăng nhập vào ngày hôm sau liên tiếp, chuỗi streak sẽ tăng lên và phần thưởng của ngày tiếp theo được mở khóa.
+- Nếu bỏ lỡ một ngày (không đăng nhập hoặc không nhận thưởng vào ngày kế tiếp), chuỗi sẽ **bị reset về ngày 1**.
+- Sau khi hoàn thành đủ 12 ngày trong chu kỳ, vòng tiếp theo bắt đầu lại từ ngày 1.
 
-## Match Rewards
-When a game ends, `server/game` calls the API internal reward endpoint.
+**Bảng phần thưởng theo ngày:**
 
-Rewards:
-- Winning team member: `+10 coins`, `+1 gem`, `+200 elo`
-- Losing team member: `+2 coins`
+| Ngày | Phần thưởng |
+|------|-------------|
+| 1    | 10 xu       |
+| 2    | 15 xu       |
+| 3    | 20 xu       |
+| 4    | 25 xu       |
+| 5    | 30 xu       |
+| 6    | 10 đá quý  |
+| 7    | 35 xu       |
+| 8    | 40 xu       |
+| 9    | 45 xu       |
+| 10   | 50 xu       |
+| 11   | 55 xu       |
+| 12   | 20 đá quý  |
 
-Internal endpoint:
-- `POST /api/internal/matches/reward`
-- Header: `x-game-server-secret: <GAME_SERVER_INTERNAL_SECRET>`
+---
 
-## Notes
-- This folder is a clean formatted copy of the current merged project.
-- Original repository remains untouched.
+### 2. Stories — Cốt truyện theo chương
+
+Người chơi có thể theo dõi cốt truyện của game thông qua hệ thống **9 chương truyện**, mỗi chương được mở khóa dựa trên level của người chơi.
+
+**Cơ chế hoạt động:**
+- Chương X được mở khóa khi người chơi đạt **Level X**.
+- Level được tính dựa trên điểm ELO tích lũy qua các trận đấu.
+- Các chương bị khóa sẽ hiển thị biểu tượng ổ khóa và thông báo level cần đạt để mở.
+- Nội dung từng chương (tiêu đề và văn bản truyện) được tải động từ server, giúp tiết kiệm băng thông — chỉ tải chương đang được chọn.
+- Giao diện hiển thị dạng cuộn giấy cổ (scroll panel) với hình nền riêng biệt cho từng chương.
+
+
+---
+
+### 3. Quản lý cửa hàng bởi Admin
+
+Tài khoản admin có thể thêm và quản lý các vật phẩm mới trong cửa hàng thông qua giao diện quản trị, bao gồm ba loại skin chính:
+
+**Bản đồ mới (Map skin):**
+- Admin tải lên file `.zip` chứa toàn bộ hình ảnh cho bản đồ (tối đa 20MB).
+- File zip phải bao gồm đủ: `preview.png`, `add-card.png`, và ảnh cho 12 cung hoàng đạo (`ty.png`, `suu.png`, `dan.png`, `mao.png`, `thin.png`, `ti.png`, `ngo.png`, `mui.png`, `than.png`, `dau.png`, `tuat.png`, `hoi.png`).
+- Hệ thống tự động giải nén, kiểm tra tính hợp lệ và lưu trữ các ảnh, sau đó tạo metadata đầy đủ cho bản đồ.
+
+**Xúc xắc mới (Dice skin):**
+- Admin tải lên ảnh xúc xắc tùy chỉnh (PNG/JPEG/WebP/GIF, tối đa 5MB).
+- Sau khi upload, ảnh được lưu trữ và gắn vào vật phẩm trong cửa hàng với loại `SKIN` và `skinType: DICE`.
+
+**Frame mới (Frame skin):**
+- Admin tải lên ảnh khung avatar tùy chỉnh (PNG/JPEG/WebP/GIF, tối đa 5MB).
+- Frame được đăng bán trong cửa hàng với loại `SKIN` và `skinType: FRAME`.
+
+**Các thao tác quản lý:**
+- Thêm vật phẩm mới với tên, mô tả, giá xu và giá đá quý tùy chỉnh.
+- Chỉnh sửa thông tin vật phẩm đã có.
+- Bật/tắt trạng thái hiển thị vật phẩm trong cửa hàng.
+- Xóa vật phẩm khỏi cửa hàng.
+## Deploy 
+Trang web đã được deploy trên `qgiaaa.me`
+## Các Video demo 
+## Video khảo sát user 
+## Ảnh chụp minh chứng cộng điểm
+https://drive.google.com/drive/folders/1pFW0jp7A0U8wdaUDLvknU4OxjSaoWds4?usp=drive_link 
+## Câu thần chú 
+*Chúng em đã biết làm web và hiểu hệ thống web hoạt động như thế nào.* 
+

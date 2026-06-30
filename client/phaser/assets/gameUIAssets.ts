@@ -1,4 +1,4 @@
-﻿import * as Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import type { EquippedMapAssets } from '@/lib/types/auth';
 import { CardType, ZodiacName } from '@/types/game';
 
@@ -103,6 +103,7 @@ export const GAME_UI_IMAGE_ASSETS: AssetDef[] = [
   { key: 'ui-piece-hoi', path: '/game-ui/pieces/Piece_Hoi.svg' },
 ];
 
+
 export const preloadGameUIAssets = (
   scene: Phaser.Scene,
   options?: {
@@ -112,6 +113,9 @@ export const preloadGameUIAssets = (
 ): void => {
   const dicePanelImageUrl = options?.dicePanelImageUrl?.trim() || DEFAULT_DICE_PANEL_PATH;
   const mapSkinAssets = options?.mapSkinAssets ?? null;
+
+  // Cho phép load ảnh cross-origin (cần thiết khi URL là absolute từ backend)
+  scene.load.crossOrigin = 'anonymous';
 
   if (scene.textures.exists('ui-dice-panel')) {
     scene.textures.remove('ui-dice-panel');
@@ -148,6 +152,37 @@ export const preloadGameUIAssets = (
       scene.load.image(asset.key, asset.path);
     }
   });
+
+  // Fallback: khi load ảnh custom thất bại (CORS, 404, ...) → tải lại bằng path mặc định
+  const textureFallbackPaths: Record<string, string> = {
+    'ui-dice-panel': DEFAULT_DICE_PANEL_PATH,
+    [BOARD_BOX_TEXTURE_KEYS.addCard]: DEFAULT_BOARD_BOX_ASSET_PATHS.addCard,
+  };
+  Object.entries(DEFAULT_BOARD_BOX_ASSET_PATHS.zodiacBySlug).forEach(([slug, fbPath]) => {
+    const key = (BOARD_BOX_TEXTURE_KEYS.zodiacBySlug as Record<string, string>)[slug];
+    if (key) textureFallbackPaths[key] = fbPath;
+  });
+
+  const handleLoadError = (file: Phaser.Loader.File) => {
+    const fallbackPath = textureFallbackPaths[file.key];
+    if (!fallbackPath || file.src === fallbackPath) return;
+
+    console.warn(
+      `[GameUI] Failed to load texture "${file.key}" from ${file.src}. Falling back to default.`
+    );
+
+    // Load lại bằng path mặc định sau khi scene sẵn sàng
+    scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
+      if (scene.textures.exists(file.key)) {
+        scene.textures.remove(file.key);
+      }
+      scene.load.image(file.key, fallbackPath);
+      scene.load.start();
+    });
+  };
+
+  // Đăng ký một lần, tự xóa sau khi loader xong
+  scene.load.once(Phaser.Loader.Events.FILE_LOAD_ERROR, handleLoadError);
 };
 
 const normalizeZodiacName = (value: string | null | undefined): string => {

@@ -27,7 +27,9 @@ app.use(
   })
 );
 app.use(express.json({ limit: '32mb' }));
-app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+// Static uploads: cho phép mọi origin truy cập (ảnh shop, bản đồ là public assets)
+// Phaser dùng XHR để load ảnh nên cần CORS header explict, không thể dùng CORS chung với API
+app.use('/uploads', cors({ origin: '*' }), express.static(path.resolve(process.cwd(), 'uploads')));
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/friends', friendRouter);
