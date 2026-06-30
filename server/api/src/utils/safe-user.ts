@@ -48,6 +48,13 @@ type UserWithEquippedFrame = User & {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+// Normalize URL upload: đổi http:// → https:// cho URL từ backend
+// Cần thiết vì data cũ được upload trước khi Nginx có X-Forwarded-Proto
+const normalizeUploadUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  return url.replace(/^http:\/\//, 'https://');
+};
+
 const getEquippedMapAssets = (user: UserWithEquippedFrame): EquippedMapAssets | null => {
   const metadata = user.equippedMapItem?.metadata;
   if (!isRecord(metadata) || metadata.skinType !== 'MAP' || !isRecord(metadata.mapAssets)) {
@@ -70,12 +77,12 @@ const getEquippedMapAssets = (user: UserWithEquippedFrame): EquippedMapAssets | 
       return null;
     }
 
-    zodiacBoxImageUrls[key] = imageUrl;
+    zodiacBoxImageUrls[key] = normalizeUploadUrl(imageUrl) ?? imageUrl;
   }
 
   return {
-    previewImageUrl: mapAssets.previewImageUrl,
-    addCardImageUrl: mapAssets.addCardImageUrl,
+    previewImageUrl: normalizeUploadUrl(mapAssets.previewImageUrl) ?? mapAssets.previewImageUrl,
+    addCardImageUrl: normalizeUploadUrl(mapAssets.addCardImageUrl) ?? mapAssets.addCardImageUrl,
     zodiacBoxImageUrls
   };
 };
@@ -89,9 +96,9 @@ export const toSafeUser = (user: UserWithEquippedFrame): SafeUser => ({
   gems: user.gems,
   role: user.role,
   equippedFrameItemId: user.equippedFrameItemId ?? null,
-  equippedFrameImageUrl: user.equippedFrameItem?.imageUrl ?? null,
+  equippedFrameImageUrl: normalizeUploadUrl(user.equippedFrameItem?.imageUrl),
   equippedDiceItemId: user.equippedDiceItemId ?? null,
-  equippedDicePanelImageUrl: user.equippedDiceItem?.imageUrl ?? null,
+  equippedDicePanelImageUrl: normalizeUploadUrl(user.equippedDiceItem?.imageUrl),
   equippedMapItemId: user.equippedMapItemId ?? null,
   equippedMapAssets: getEquippedMapAssets(user)
 });

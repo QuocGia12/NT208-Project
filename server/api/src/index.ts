@@ -21,6 +21,11 @@ const httpServer = createServer(app);
 const port = Number(process.env.PORT ?? 4000);
 const allowedOrigins = getAllowedOrigins();
 
+// Khi chạy sau Nginx reverse proxy, cần trust proxy để:
+// - req.protocol trả về 'https' (từ X-Forwarded-Proto)
+// - req.ip trả về IP thực của client (từ X-Forwarded-For)
+app.set('trust proxy', 1);
+
 app.use(
   cors({
     origin: allowedOrigins
