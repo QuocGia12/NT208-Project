@@ -1,0 +1,53 @@
+services: 
+    postgre-sql-zodiac-game: 
+        image: postgres:16-alpine 
+        container_name: postgres_zodiac_game
+        volumes: 
+            - postgre_sql_game_data:/var/lib/postgresql/data
+        environment: 
+            POSTGRES_USER: zodiac_user
+            POSTGRES_PASSWORD: zodiac_password
+            POSTGRES_DB: zodiac_game
+    redis-zodiac-game: 
+        image: redis:7-alpine 
+        container_name: redis_zodiac_game
+        volumes: 
+            - redis_game_data:/data
+    api-server:
+        build: ./server/api 
+        image: api-server-zodiac-game
+        container_name: api-server-zodiac-game
+        ports: 
+            - "4000:4000"
+        environment: 
+            PORT: 4000
+            FRONTEND_ORIGIN: "http://localhost"
+            FRONTEND_ORIGINS: "http://localhost,http://127.0.0.1,http://game.com, http://192.168.245.100"
+            DATABASE_URL: "postgresql://zodiac_user:zodiac_password@postgre-sql-zodiac-game:5432/zodiac_game?schema=public"
+            REDIS_URL: "redis://redis-zodiac-game:6379"
+            JWT_SECRET: "change_me_for_local_dev"
+            JWT_EXPIRES_IN: "7d"
+            ADMIN_USERNAME: "admin"
+            ADMIN_PASSWORD: "admin123"
+            ADMIN_AVATAR: ""
+            GAME_SERVER_INTERNAL_SECRET: "dev_internal_secret_change_me"
+    game-server: 
+        build: ./server/game
+        image: game-server-zodiac-game
+        container_name: game-server-zodiac-game
+        ports: 
+            - "3001:3001"
+    frontend: 
+        build: ./client 
+        image: frontend-zodiac-game 
+        container_name: frontend-zodiac-game
+        ports:  
+            - "80:80"
+        environment: 
+            NEXT_PUBLIC_API_BASE_URL: "http://game.com:4000"
+            NEXT_PUBLIC_GAME_SOCKET_URL: "http://game.com:3001"
+
+volumes: 
+    postgre_sql_game_data: 
+    redis_game_data:
+

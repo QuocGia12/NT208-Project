@@ -1,0 +1,23 @@
+import { NextFunction, Request, Response } from 'express';
+
+export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(
+      JSON.stringify({
+        '@timestamp': new Date().toISOString(),
+        'source.ip': req.ip,
+        'http.request.method': req.method,
+        'url.path': req.originalUrl,
+        'http.response.status_code': res.statusCode,
+        'user_agent.original': req.get('user-agent'),
+        "http.request.body": req.body,
+        'event.duration': duration * 1_000_000
+      })
+    );
+  });
+
+  next();
+};

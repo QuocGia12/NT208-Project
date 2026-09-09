@@ -15,6 +15,8 @@ import shopRouter from './routes/shop.routes';
 import userRouter from './routes/user.routes';
 import { getAllowedOrigins } from './config/origins';
 import { initializeSocketServer } from './socket/server';
+import { requestIdMiddleware } from './middleware/request-id.middleware';
+import { requestLogger } from './middleware/request-logger.middleware';
 
 const app = express();
 const httpServer = createServer(app);
@@ -26,12 +28,16 @@ const allowedOrigins = getAllowedOrigins();
 // - req.ip trả về IP thực của client (từ X-Forwarded-For)
 app.set('trust proxy', 1);
 
+app.use(requestIdMiddleware);
+app.use(express.json({ limit: '32mb' }));
+app.use(requestLogger);
+
 app.use(
   cors({
     origin: allowedOrigins
   })
 );
-app.use(express.json({ limit: '32mb' }));
+
 // Static uploads: cho phép mọi origin truy cập (ảnh shop, bản đồ là public assets)
 // Phaser dùng XHR để load ảnh nên cần CORS header explict, không thể dùng CORS chung với API
 app.use('/uploads', cors({ origin: '*' }), express.static(path.resolve(process.cwd(), 'uploads')));
