@@ -3,8 +3,7 @@ import type {
   FetchMessagesResponse,
   SendMessageResponse
 } from '@/lib/types/chat';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000';
+import { getApiBaseUrl } from '@/lib/runtime-config';
 
 const authHeaders = (token: string): HeadersInit => ({
   'Content-Type': 'application/json',
@@ -25,7 +24,7 @@ const parseErrorMessage = async (response: Response) => {
 };
 
 const request = async <T>(path: string, init: RequestInit): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${path}`, init);
+  const response = await fetch(`${getApiBaseUrl()}${path}`, init);
 
   if (!response.ok) {
     throw new Error(await parseErrorMessage(response));

@@ -4,8 +4,7 @@ import {
   RegisterPayload,
   RegisterResponse
 } from '@/lib/types/auth';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000';
+import { getApiBaseUrl } from '@/lib/runtime-config';
 
 const parseErrorMessage = async (response: Response) => {
   try {
@@ -21,7 +20,7 @@ const parseErrorMessage = async (response: Response) => {
 };
 
 const request = async <T>(path: string, init: RequestInit): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',

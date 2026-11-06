@@ -4,8 +4,7 @@ import type {
   PublicProfileResponse
 } from '@/lib/types/user';
 import type { AuthUser } from '@/lib/types/auth';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000';
+import { getApiBaseUrl } from '@/lib/runtime-config';
 
 const authHeaders = (token: string): HeadersInit => ({
   'Content-Type': 'application/json',
@@ -25,7 +24,7 @@ const parseErrorMessage = async (response: Response) => {
 };
 
 export const fetchMyProfile = async (token: string): Promise<MyProfileResponse> => {
-  const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/users/me`, {
     method: 'GET',
     headers: authHeaders(token)
   });
@@ -42,7 +41,7 @@ export const fetchUserProfile = async (
   username: string
 ): Promise<PublicProfileResponse> => {
   const response = await fetch(
-    `${API_BASE_URL}/api/users/${encodeURIComponent(username)}`,
+    `${getApiBaseUrl()}/api/users/${encodeURIComponent(username)}`,
     {
       method: 'GET',
       headers: authHeaders(token)
@@ -59,7 +58,7 @@ export const fetchUserProfile = async (
 export const fetchLeaderboard = async (
   token: string
 ): Promise<LeaderboardResponse> => {
-  const response = await fetch(`${API_BASE_URL}/api/users/leaderboard`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/users/leaderboard`, {
     method: 'GET',
     headers: authHeaders(token)
   });
@@ -76,7 +75,7 @@ export const changeMyPassword = async (
   currentPassword: string,
   newPassword: string
 ): Promise<string> => {
-  const response = await fetch(`${API_BASE_URL}/api/users/me/password`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/users/me/password`, {
     method: 'PATCH',
     headers: authHeaders(token),
     body: JSON.stringify({ currentPassword, newPassword })
@@ -94,7 +93,7 @@ export const updateMyAvatar = async (
   token: string,
   avatar: string | null
 ): Promise<AuthUser> => {
-  const response = await fetch(`${API_BASE_URL}/api/users/me/avatar`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/users/me/avatar`, {
     method: 'PATCH',
     headers: authHeaders(token),
     body: JSON.stringify({ avatar })

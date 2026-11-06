@@ -1,6 +1,5 @@
 import type { AuthUser, LoginStreakStatus } from '@/lib/types/auth';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000';
+import { getApiBaseUrl } from '@/lib/runtime-config';
 
 const authHeaders = (token: string): HeadersInit => ({
   'Content-Type': 'application/json',
@@ -21,7 +20,7 @@ const parseErrorMessage = async (response: Response) => {
 };
 
 export const fetchLoginStreak = async (token: string): Promise<LoginStreakStatus> => {
-  const response = await fetch(`${API_BASE_URL}/api/users/me/login-streak`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/users/me/login-streak`, {
     method: 'GET',
     headers: authHeaders(token)
   });
@@ -41,7 +40,7 @@ export const claimLoginStreak = async (
   streak: LoginStreakStatus;
   user: AuthUser;
 }> => {
-  const response = await fetch(`${API_BASE_URL}/api/users/me/login-streak/claim`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/users/me/login-streak/claim`, {
     method: 'POST',
     headers: authHeaders(token)
   });

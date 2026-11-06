@@ -1,6 +1,7 @@
 'use client';
 
 import { io, type Socket } from 'socket.io-client';
+import { getGameSocketUrl } from '@/lib/runtime-config';
 
 export type GameTeamId = 'team1' | 'team2';
 export type GameTeamSlot = 0 | 1;
@@ -67,10 +68,7 @@ type Unsubscribe = () => void;
 
 const MATCH_STORAGE_KEY = 'zodiac:last-match-found';
 
-const resolveGameSocketUrl = () =>
-  process.env.NEXT_PUBLIC_GAME_SOCKET_URL ??
-  process.env.NEXT_PUBLIC_GAME_SERVER_URL ??
-  'http://localhost:3001';
+const resolveGameSocketUrl = () => getGameSocketUrl();
 
 const unwrapPayload = <T>(payload: MaybeWrapped<T>): T => {
   if (

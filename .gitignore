@@ -32,3 +32,5 @@ Thumbs.db
 
 # Keep .env files committed for local teammate testing.
 # Move secrets out of committed env files before production.
+
+*.md

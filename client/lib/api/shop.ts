@@ -10,8 +10,7 @@ import type {
   ShopItemsResponse,
   UpsertAdminShopItemPayload
 } from '@/lib/types/shop';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000';
+import { getApiBaseUrl } from '@/lib/runtime-config';
 
 const authHeaders = (token: string): HeadersInit => ({
   'Content-Type': 'application/json',
@@ -36,7 +35,7 @@ const requestJson = async <T>(
   path: string,
   options: Omit<RequestInit, 'headers'> = {}
 ) => {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...options,
     headers: authHeaders(token)
   });
