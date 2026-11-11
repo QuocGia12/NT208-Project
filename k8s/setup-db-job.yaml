@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: zodiac-db-setup
+  namespace: zodiac-game
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: db-setup
+          image: qgiaaa/zodiac-db
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              set -eu;
+              npm run prisma:migrate:deploy;
+              npm run prisma:seed;
+          envFrom:
+            - configMapRef:
+                name: config-map-zodiac-api-be
+            - secretRef:
+                name: secret-zodiac-api-be

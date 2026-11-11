@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-map-zodiac-fe 
+  namespace: zodiac-game
+data:
+  NEXT_PUBLIC_API_BASE_URL: "http://zodiac-api-be.lab"
+  NEXT_PUBLIC_GAME_SOCKET_URL: "http://zodiac-game-be.lab"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-map-zodiac-api-be 
+  namespace: zodiac-game
+data:
+  PORT: "4000"
+  FRONTEND_ORIGIN: "http://zodiac.lab"
+  FRONTEND_ORIGINS: "http://zodiac.lab, http://127.0.0.1"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-map-zodiac-game-be 
+  namespace: zodiac-game
+data:
+  PORT: "3001"
+  FRONTEND_ORIGIN: "http://zodiac.lab"
+  FRONTEND_ORIGINS: "http://zodiac.lab, http://127.0.0.1"
+  API_BASE_URL: "http://zodiac-api-be.lab"

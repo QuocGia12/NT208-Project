@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: zodiac-game-game-backend
+  name: deployment-zodiac-game-be 
+  namespace: zodiac-game
+spec:
+  replicas: 1
+  revisionHistoryLimit: 11
+  selector:
+    matchLabels:
+      app: zodiac-game-game-backend
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: zodiac-game-game-backend
+      namespace: zodiac-game
+    spec:
+      containers:
+        - image: qgiaaa/zodiac-game-backend
+          imagePullPolicy: Always
+          name: zodiac-game-backend
+          ports:
+            - containerPort: 3001
+              name: tcp
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: config-map-zodiac-game-be
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-zodiac-game-be
+  namespace: zodiac-game
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+    - name: tcp
+      port: 3001
+      protocol: TCP
+      targetPort: 3001
+  selector:
+    app: zodiac-game-game-backend
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-zodiac-game-be 
+  namespace: zodiac-game
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: zodiac-game-be.lab
+      http:
+        paths:
+          - backend:
+              service:
+                name: service-zodiac-game-be
+                port:
+                  number: 3001
+            path: /
+            pathType: Prefix

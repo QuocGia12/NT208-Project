@@ -4,6 +4,8 @@ services:
         container_name: postgres_zodiac_game
         volumes: 
             - postgre_sql_game_data:/var/lib/postgresql/data
+        ports: 
+            - "5432:5432"
         environment: 
             POSTGRES_USER: zodiac_user
             POSTGRES_PASSWORD: zodiac_password
@@ -13,6 +15,8 @@ services:
         container_name: redis_zodiac_game
         volumes: 
             - redis_game_data:/data
+        ports: 
+            - "6379:6379"
     api-server:
         build: ./server/api 
         image: api-server-zodiac-game
@@ -37,6 +41,11 @@ services:
         container_name: game-server-zodiac-game
         ports: 
             - "3001:3001"
+        environment: 
+            PORT: 3001
+            FRONTEND_ORIGIN: "http://localhost"
+            FRONTEND_ORIGINS: "http://localhost,http://127.0.0.1,http://game.com, http://192.168.245.100"
+            GAME_SERVER_INTERNAL_SECRET: "dev_internal_secret_change_me"
     frontend: 
         build: ./client 
         image: frontend-zodiac-game 

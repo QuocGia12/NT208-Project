@@ -34,3 +34,4 @@ Thumbs.db
 # Move secrets out of committed env files before production.
 
 *.md
+!k8s/README.md
