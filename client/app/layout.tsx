@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Baloo_2, Be_Vietnam_Pro, Lilita_One, Lora, Open_Sans, Playpen_Sans } from 'next/font/google';
-import Script from 'next/script';
 import type { ReactNode } from 'react';
 
 import { GlobalClickSfx } from '@/components/app/global-click-sfx';
@@ -71,7 +70,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
           playpenSans.variable
         ].join(' ')}
       >
-        <Script src="/runtime-env.js" strategy="beforeInteractive" />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/runtime-env.js"></script>
         <GlobalClickSfx />
         {children}
       </body>
